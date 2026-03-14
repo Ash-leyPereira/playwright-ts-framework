@@ -1,12 +1,9 @@
-import { test } from "@playwright/test";
-import { LoginPage } from "@pages/loginPage";
+import { test } from "@fixtures/testFixture";
 
-test("Login Test", async ({ page }) => {
+test("Login Test", async ({ loginPage }) => {
 
- const loginPage = new LoginPage(page);
+  await loginPage.navigate("https://www.saucedemo.com");
 
- await loginPage.navigate("https://www.saucedemo.com");
-
- await loginPage.login("standard_user", "secret_sauce");
+  await loginPage.login("standard_user", "secret_sauce");
 
 });

@@ -15,7 +15,8 @@
       "@core/*": ["src/core/*"],
       "@pages/*": ["src/pages/*"],
       "@utils/*": ["src/core/utils/*"],
-      "@api/*": ["src/api/*"]
+      "@api/*": ["src/api/*"],
+      "@fixtures/*": ["src/fixtures/*"],
     },
     "types": ["node", "@playwright/test"],
     "strict": true
