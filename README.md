@@ -8,6 +8,7 @@
 ![Passed](https://img.shields.io/badge/passed-9-brightgreen)
 ![Failed](https://img.shields.io/badge/failed-9-red)
 ![Pass Rate](https://img.shields.io/badge/pass_rate-50.00%25-green)
+![Stability](https://img.shields.io/badge/stability-50.00%25-blue)
 
 <!-- BADGES_END -->
 
@@ -19,7 +20,7 @@
 
 <!-- TEST_RESULTS_START -->
 
-## 🚀 Automation Status
+## 🚀 Automation Execution Status
 
 | Metric | Value |
 |------|------|
@@ -28,6 +29,7 @@
 | Failed | 9 |
 | Skipped | 0 |
 | Pass Rate | 50.00% |
+| Stability Score | 50.00% |
 | Last Run | 2026-03-14 |
 
 <!-- TEST_RESULTS_END -->
