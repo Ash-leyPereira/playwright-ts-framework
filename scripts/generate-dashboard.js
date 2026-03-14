@@ -1,33 +1,28 @@
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
-const historyFile = path.join(__dirname, '../analytics/history.json');
-const resultsDir = path.join(__dirname, '../reports/allure-results');
-const flakyFile = path.join(__dirname, '../reports/flaky-tests.md'); // optional markdown
+const resultsDir = path.join(__dirname, '..', 'results', new Date().toISOString().slice(0,10));
+const historyFile = path.join(__dirname, '..', 'history', 'history.json');
 
-let passed = 0;
-let failed = 0;
-let total = 0;
-const flakyTests = [];
-const maxRetries = 2; // or read from Playwright config
+let todayData = { total: 0, passed: 0, failed: 0, flaky: 0, flakyTests: [] };
 
-fs.readdirSync(resultsDir).forEach(file => {
-  if (!file.endsWith('-result.json')) return;
+// Read all results
+const resultFiles = fs.existsSync(resultsDir) ? fs.readdirSync(resultsDir).filter(f => f.endsWith('.json')) : [];
+
+for (const file of resultFiles) {
   const data = JSON.parse(fs.readFileSync(path.join(resultsDir, file), 'utf8'));
-
-  total++;
-  if (data.status === 'passed') passed++;
-  if (data.status === 'failed') failed++;
-
-  // Detect flaky: failed but retried successfully
-  if (data.attempts && data.attempts > 1 && data.status === 'passed') {
-    flakyTests.push(data.name);
+  todayData.total += data.total || 0;
+  todayData.passed += data.passed || 0;
+  todayData.failed += data.failed || 0;
+  if (data.flakyTests) {
+    todayData.flaky += data.flakyTests.length;
+    todayData.flakyTests.push(...data.flakyTests);
   }
-});
+}
 
-// Calculate pass rate and stability
-const passRate = total ? ((passed / total) * 100).toFixed(2) : 0;
-const stabilityScore = total ? (((passed - flakyTests.length) / total) * 100).toFixed(2) : 0;
+// Calculate stability score
+todayData.stabilityScore = ((todayData.total - todayData.failed - todayData.flaky) / todayData.total * 100).toFixed(2) + '%';
+todayData.timestamp = new Date().toISOString();
 
 // Load previous history
 let history = [];
@@ -35,21 +30,9 @@ if (fs.existsSync(historyFile)) {
   history = JSON.parse(fs.readFileSync(historyFile, 'utf8'));
 }
 
-// Append current run
-history.push({
-  date: new Date().toISOString().split('T')[0],
-  total,
-  passed,
-  failed,
-  passRate,
-  flakyTests,
-  stabilityScore
-});
+// Append today's data
+history.push(todayData);
 
 // Save updated history
 fs.writeFileSync(historyFile, JSON.stringify(history, null, 2));
-
-// Optionally save flaky tests to markdown
-fs.writeFileSync(flakyFile, `# Flaky Test Report\n\n${flakyTests.length ? flakyTests.map(t => `- ${t}`).join('\n') : 'No flaky tests'}\n`);
-
-console.log('Dashboard data updated ✅');
+console.log('✅ History updated with flaky tests and stability score');
