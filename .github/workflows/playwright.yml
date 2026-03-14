@@ -44,7 +44,7 @@ jobs:
         cp reports/flaky-tests.md reports/allure-report/analytics/flaky-tests.md
 
     - name: Deploy All Reports & Analytics to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v6
+      uses: peaceiris/actions-gh-pages@v3.10.12
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./reports/allure-report
