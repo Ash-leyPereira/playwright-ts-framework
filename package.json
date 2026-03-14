@@ -1,0 +1,26 @@
+{
+  "name": "playwright-ts-framework",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ash-leyPereira/playwright-ts-framework.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Ash-leyPereira/playwright-ts-framework/issues"
+  },
+  "homepage": "https://github.com/Ash-leyPereira/playwright-ts-framework#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@types/node": "^25.5.0"
+  }
+}
