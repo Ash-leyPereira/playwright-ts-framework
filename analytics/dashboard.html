@@ -8,7 +8,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image/2.6.0/dom-to-image.min.js"></script>
+  <script src="https://unpkg.com/html-to-image@1.11.11/dist/html-to-image.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
@@ -35,9 +35,14 @@
     header {
       background: #1a73e8;
       color: white;
-      padding: 20px;
+      padding: 20px 20px 40px; /* default height */
       text-align: center;
       position: relative;
+      z-index: 1;
+      transition: padding-bottom 0.2s ease;
+    }
+    header.header-expanded {
+      padding-bottom: 80px;
     }
     header .refresh-btn {
       position: absolute;
@@ -54,10 +59,11 @@
     header .refresh-btn:hover { background: rgba(255,255,255,0.4); }
     header .download-btns {
       position: absolute;
-      top: 10px;
+      top: 12px;
       left: 20px;
       display: flex;
       gap: 10px;
+      align-items: center;
     }
     header .download-btns button {
       background: rgba(255,255,255,0.2);
@@ -69,6 +75,57 @@
       transition: background 0.3s;
     }
     header .download-btns button:hover { background: rgba(255,255,255,0.4); }
+    .filter-group {
+      position: absolute;
+      top: 10px;
+      left: 120px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 2px;
+      padding: 6px 10px 8px;
+      border-radius: 8px;
+      background: transparent; /* transparent container over header */
+      box-shadow: none;
+    }
+    .filter-group label {
+      color: #e3f2fd; /* light text for blue header */
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+    }
+    .filter-select {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      min-width: 150px;
+      padding: 4px 28px 4px 0;
+      border: none;
+      border-bottom: 1px solid rgba(255,255,255,0.7);
+      font-size: 13px;
+      background: transparent;
+      color: #ffffff;
+      font-weight: 400;
+      cursor: pointer;
+      outline: none;
+      position: relative;
+    }
+    .filter-select:focus {
+      border-bottom: 2px solid #ffffff;
+    }
+    .filter-group::after {
+      content: '';
+      position: absolute;
+      right: 14px;
+      bottom: 10px;
+      border: 5px solid transparent;
+      border-top-color: #ffffff;
+      pointer-events: none;
+    }
+    .filter-select option {
+      background: #ffffff;
+      color: #202124;
+    }
     h2 { margin: 0; font-weight: 500; }
     .loading { text-align: center; padding: 50px; font-size: 18px; color: #666; }
     .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #1a73e8; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 20px; }
@@ -128,7 +185,23 @@
   <div class="container">
     <header>
       <div class="download-btns">
-        <button onclick="downloadPNG()"><i class="fas fa-image"></i> PNG</button>
+        <button onclick="downloadImage()"><i class="fas fa-image"></i> Image</button>
+      </div>
+      <div class="filter-group">
+        <label for="dateFilter">History Range</label>
+        <select
+          id="dateFilter"
+          class="filter-select"
+          onchange="onFilterChange(this.value)"
+          onmousedown="toggleHeaderExpand(true)"
+          onblur="toggleHeaderExpand(false)"
+        >
+          <option value="all">All</option>
+          <option value="today">Today</option>
+          <option value="lastDay">Last 24h</option>
+          <option value="weekly">Last 7 days</option>
+          <option value="monthly">Last 30 days</option>
+        </select>
       </div>
       <button class="refresh-btn" onclick="location.reload()"><i class="fas fa-sync-alt"></i></button>
       <h2><i class="fas fa-rocket"></i> Automation Analytics Dashboard</h2>
@@ -172,18 +245,91 @@
   </div>
 
   <script>
+    let fullHistoryData = [];
+    let trendChartInstance, stabilityChartInstance, flakyChartInstance;
+
+    function toggleHeaderExpand(expand) {
+      const headerEl = document.querySelector('header');
+      if (!headerEl) return;
+      if (expand) {
+        headerEl.classList.add('header-expanded');
+      } else {
+        headerEl.classList.remove('header-expanded');
+      }
+    }
+
+    // header expand/collapse is now controlled directly from the select
+    // via onmousedown (expand) and onblur/onchange (collapse)
+
     async function fetchHistory() {
       const response = await fetch('./history.json');
       if (!response.ok) throw new Error('Cannot fetch history.json');
       return response.json();
     }
 
-    function renderDashboard(data) {
-      document.getElementById('loading').style.display = 'none';
-      document.getElementById('content').style.display = 'block';
+    function onFilterChange(range) {
+      applyFilter(range);
+      // Collapse header back to its default height after a selection
+      toggleHeaderExpand(false);
+    }
 
+    function applyFilter(range) {
+      if (!fullHistoryData || fullHistoryData.length === 0) {
+        renderDashboard([]);
+        return;
+      }
+
+      const now = new Date();
+      let filtered = fullHistoryData;
+
+      if (range && range !== 'all') {
+        filtered = fullHistoryData.filter(r => {
+          const ts = new Date(r.timestamp);
+          const diffMs = now - ts;
+          const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
+          switch (range) {
+            case 'today':
+              return ts.toDateString() === now.toDateString();
+            case 'lastDay':
+              return diffMs <= 24 * 60 * 60 * 1000;
+            case 'weekly':
+              return diffDays <= 7;
+            case 'monthly':
+              return diffDays <= 30;
+            default:
+              return true;
+          }
+        });
+      }
+
+      renderDashboard(filtered);
+    }
+
+    function renderDashboard(data) {
+      const summary = document.getElementById('summary');
+      const flakyList = document.getElementById('flakyList');
+      const trendCanvas = document.getElementById('trendChart');
+      const stabilityCanvas = document.getElementById('stabilityChart');
+      const flakyCanvas = document.getElementById('flakyChart');
+      const chartsSection = document.querySelector('.charts');
+      const flakySection = document.querySelector('.flaky-section');
+
+      // If no data, clear sections and show default message in summary
       if (!data || data.length === 0) {
-        document.getElementById('content').innerHTML = '<p style="text-align: center; padding: 50px; color: #666;"><i class="fas fa-info-circle"></i> No data available. Run tests to generate history.</p>';
+        summary.innerHTML = `<p style="text-align: center; padding: 50px; color: #666;">
+          <i class="fas fa-info-circle"></i> No data available. Run tests to generate history.
+        </p>`;
+        flakyList.innerHTML = '';
+        
+        // Destroy existing charts if any
+        if (trendChartInstance) { trendChartInstance.destroy(); trendChartInstance = null; }
+        if (stabilityChartInstance) { stabilityChartInstance.destroy(); stabilityChartInstance = null; }
+        if (flakyChartInstance) { flakyChartInstance.destroy(); flakyChartInstance = null; }
+
+        if (chartsSection) chartsSection.style.display = 'none';
+        if (flakySection) flakySection.style.display = 'none';
+
         return;
       }
 
@@ -195,7 +341,6 @@
       const flaky = data.map(d => d.flaky);
 
       const lastRun = data[data.length - 1];
-      const summary = document.getElementById('summary');
       summary.innerHTML = `
         <div class="stat-card"><h3><i class="fas fa-list"></i> Total Tests</h3><p>${lastRun.total}</p></div>
         <div class="stat-card"><h3><i class="fas fa-check-circle"></i> Passed</h3><p>${lastRun.passed}</p></div>
@@ -205,7 +350,6 @@
         <div class="stat-card"><h3><i class="fas fa-shield-alt"></i> Stability Score</h3><p>${lastRun.stabilityScore}</p></div>
       `;
 
-      const flakyList = document.getElementById('flakyList');
       flakyList.innerHTML = '';
       if (lastRun.flakyTests.length > 0) {
         lastRun.flakyTests.forEach(t => {
@@ -217,7 +361,15 @@
         flakyList.innerHTML = '<li class="no-flaky"><i class="fas fa-check"></i> No flaky tests detected</li>';
       }
 
-      new Chart(document.getElementById('trendChart').getContext('2d'), {
+      // Destroy existing charts before re-creating to avoid overlay
+      if (trendChartInstance) trendChartInstance.destroy();
+      if (stabilityChartInstance) stabilityChartInstance.destroy();
+      if (flakyChartInstance) flakyChartInstance.destroy();
+
+      if (chartsSection) chartsSection.style.display = 'grid';
+      if (flakySection) flakySection.style.display = 'block';
+
+      trendChartInstance = new Chart(document.getElementById('trendChart').getContext('2d'), {
         type: 'bar',
         data: {
           labels,
@@ -238,7 +390,7 @@
           }
         }
       });
-      new Chart(document.getElementById('stabilityChart').getContext('2d'), {
+      stabilityChartInstance = new Chart(document.getElementById('stabilityChart').getContext('2d'), {
         type: 'line',
         data: {
           labels,
@@ -257,7 +409,7 @@
         }
       });
 
-      new Chart(document.getElementById('flakyChart').getContext('2d'), {
+      flakyChartInstance = new Chart(document.getElementById('flakyChart').getContext('2d'), {
         type: 'bar',
         data: {
           labels,
@@ -280,35 +432,44 @@
       });
     }
 
-    async function downloadPNG() {
-      const node = document.querySelector('.container');
-      const rect = node.getBoundingClientRect();
-      const dataUrl = await domtoimage.toPng(node, {
+    async function downloadImage() {
+      // Capture the full dashboard container, including content below the viewport,
+      // using html-to-image (better rendering than dom-to-image)
+      const node = document.querySelector('body');
+
+      const width = node.scrollWidth;
+      const height = node.scrollHeight;
+
+      const dataUrl = await htmlToImage.toPng(node, {
         bgcolor: '#ffffff',
-        quality: 1,
-        width: node.scrollWidth,          // full scrollable width
-        height: node.scrollHeight,        // full scrollable height
+        quality: 0.95,
+        width,
+        height,
         style: {
-          width: node.scrollWidth + 'px', // force canvas width
-          height: node.scrollHeight + 'px', // force canvas height
+          width: width + 'px',
+          height: height + 'px',
           transform: 'scale(1)',
           transformOrigin: 'top left'
-        },
-        useCORS: true
+        }
       });
 
       const a = document.createElement('a');
       a.href = dataUrl;
       a.download = 'dashboard.png';
       a.click();
-
-
     }
 
-    fetchHistory().then(renderDashboard).catch(err => {
-      document.getElementById('loading').innerHTML = '<i class="fas fa-exclamation-circle"></i> Error loading dashboard: ' + err.message;
-      console.error(err);
-    });
+    fetchHistory()
+      .then(data => {
+        fullHistoryData = data || [];
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('content').style.display = 'block';
+        applyFilter(document.getElementById('dateFilter').value || 'all');
+      })
+      .catch(err => {
+        document.getElementById('loading').innerHTML = '<i class="fas fa-exclamation-circle"></i> Error loading dashboard: ' + err.message;
+        console.error(err);
+      });
   </script>
 </body>
 </html>
