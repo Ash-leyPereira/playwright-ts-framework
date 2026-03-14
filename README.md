@@ -16,4 +16,4 @@ Features
 
 ## Framework Architecture
 
-![Framework Architecture](docs/framework-architecture.png)
+![Framework Architecture](docs/frameworkArchitecture.png)
