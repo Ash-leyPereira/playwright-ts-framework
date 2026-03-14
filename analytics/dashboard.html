@@ -26,16 +26,18 @@
 
 <script>
 async function fetchHistory() {
-  const response = await fetch('history.json');
+  const response = await fetch('./history.json');
   if (!response.ok) throw new Error('Cannot fetch history.json');
   return response.json();
 }
 
 fetchHistory().then(data => {
-  const labels = data.map(r => r.date);
-  const passRate = data.map(r => r.passRate);
+  // Use timestamp and format as date
+  const labels = data.map(r => new Date(r.timestamp).toLocaleDateString());
+  // Parse strings to numbers for charts
+  const passRate = data.map(r => parseFloat(r.passRate));
   const failedTests = data.map(r => r.failed);
-  const stabilityScore = data.map(r => r.stabilityScore);
+  const stabilityScore = data.map(r => parseFloat(r.stabilityScore));
   const totalTests = data.map(r => r.total);
   const flaky = data.map(d => d.flaky);
 
@@ -46,9 +48,9 @@ fetchHistory().then(data => {
     <div><strong>Total Tests:</strong> ${lastRun.total}</div>
     <div><strong>Passed:</strong> ${lastRun.passed}</div>
     <div><strong>Failed:</strong> ${lastRun.failed}</div>
-    <div><strong>Pass Rate:</strong> ${lastRun.passRate}%</div>
+    <div><strong>Pass Rate:</strong> ${lastRun.passRate}</div>
     <div><strong>Flaky Tests:</strong> ${lastRun.flaky}</div>
-    <div><strong>Stability Score:</strong> ${lastRun.stabilityScore}%</div>
+    <div><strong>Stability Score:</strong> ${lastRun.stabilityScore}</div>
   `;
 
   const flakyList = document.getElementById('flakyList');
@@ -115,6 +117,14 @@ fetchHistory().then(data => {
             { label: 'Flaky', data: flaky, backgroundColor: 'orange' },
             { label: 'Total', data: totalTests, backgroundColor: 'blue', opacity: 0.2 }
           ]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'top' },
+            title: { display: true, text: 'Flaky Tests Trends' }
+          },
+          scales: { y: { beginAtZero: true } }
         }
       });
 
