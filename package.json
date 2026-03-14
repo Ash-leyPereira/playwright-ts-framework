@@ -8,12 +8,10 @@
   },
   "scripts": {
     "clean:reports": "rimraf reports",
-
     "test": "npm run clean:reports && playwright test",
-
-    "allure:generate": "allure generate reports/allure-results --clean -o reports/allure-report",
-
-    "test:report": "npm run clean:reports && playwright test && allure generate reports/allure-results --clean -o reports/allure-report"
+    "allure:generate": "npx allure generate reports/allure-results --clean -o reports/allure-report",
+    "test:report": "npm run clean:reports && playwright test && npx allure generate reports/allure-results --clean -o reports/allure-report",
+    "allure:open": "npx allure open reports/allure-report"
   },
   "repository": {
     "type": "git",
@@ -31,6 +29,7 @@
     "@playwright/test": "^1.58.2",
     "@types/dotenv": "^6.1.1",
     "@types/node": "^25.5.0",
+    "allure-commandline": "^2.38.0",
     "cross-env": "^10.1.0",
     "rimraf": "^6.1.3"
   },
