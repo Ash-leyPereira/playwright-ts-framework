@@ -19,6 +19,8 @@
 
 <canvas id="trendChart"></canvas>
 
+<canvas id="flakyChart"></canvas>
+
 <h3>Flaky Tests</h3>
 <ul id="flakyList"></ul>
 
@@ -35,6 +37,7 @@ fetchHistory().then(data => {
   const failedTests = data.map(r => r.failed);
   const stabilityScore = data.map(r => r.stabilityScore);
   const totalTests = data.map(r => r.total);
+  const flaky = data.map(d => d.flaky);
 
   // Display summary of last run
   const lastRun = data[data.length - 1];
@@ -44,6 +47,7 @@ fetchHistory().then(data => {
     <div><strong>Passed:</strong> ${lastRun.passed}</div>
     <div><strong>Failed:</strong> ${lastRun.failed}</div>
     <div><strong>Pass Rate:</strong> ${lastRun.passRate}%</div>
+    <div><strong>Flaky Tests:</strong> ${lastRun.flaky}</div>
     <div><strong>Stability Score:</strong> ${lastRun.stabilityScore}%</div>
   `;
 
@@ -101,6 +105,19 @@ fetchHistory().then(data => {
       scales: { y: { beginAtZero: true } }
     }
   });
+
+  // Flaky Tests Trend
+      new Chart(document.getElementById("flakyChart"), {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            { label: 'Flaky', data: flaky, backgroundColor: 'orange' },
+            { label: 'Total', data: totalTests, backgroundColor: 'blue', opacity: 0.2 }
+          ]
+        }
+      });
+
 
 }).catch(err => console.error('Error loading history.json:', err));
 </script>
