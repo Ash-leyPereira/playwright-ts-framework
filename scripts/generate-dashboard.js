@@ -29,7 +29,6 @@ let todayData = { total: 0, passed: 0, failed: 0, flaky: 0, stabilityScore: "0%"
 const resultFiles = fs.readdirSync(resultsDir).filter(f => f.endsWith('-result.json'));
 for (const file of resultFiles) {
   const data = JSON.parse(fs.readFileSync(path.join(resultsDir, file), 'utf8'));
-  console.log('Parsed data from', file, data);
   // If the file is an array of results:
   const results = Array.isArray(data) ? data : [data];
 
@@ -48,11 +47,12 @@ for (const file of resultFiles) {
 
 // Calculate stability
 const total = todayData.total || 0;
+const passed = todayData.passed || 0;
 const failed = todayData.failed || 0;
 const flaky = todayData.flaky || 0;
 
 todayData.passRate = total > 0
-  ? ((todayData.passed / total) * 100).toFixed(2) + '%'
+  ? ((passed / total) * 100).toFixed(2) + '%'
   : '0%';
 todayData.stabilityScore = total > 0
   ? (((total - failed - flaky) / total) * 100).toFixed(2) + '%'
