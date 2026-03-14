@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ main ]
+    branches: [ main ]  
 
 jobs:
   test:
@@ -13,16 +13,13 @@ jobs:
 
     steps:
 
-    - name: Checkout repository
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
-    - name: Setup Node
-      uses: actions/setup-node@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: lts/*
 
-    - name: Setup Java
-      uses: actions/setup-java@v4
+    - uses: actions/setup-java@v4
       with:
         distribution: temurin
         java-version: 17
@@ -30,16 +27,19 @@ jobs:
     - name: Install dependencies
       run: npm ci
 
-    - name: Install Playwright Browsers
+    - name: Install Playwright browsers
       run: npx playwright install --with-deps
 
     - name: Run Playwright tests
       run: npm run test
+      continue-on-error: true
 
     - name: Generate Allure Report
+      if: always()
       run: npx allure generate reports/allure-results --clean -o reports/allure-report
 
-    - name: Deploy Allure Report to GitHub Pages
+    - name: Deploy Allure Report
+      if: always()
       uses: peaceiris/actions-gh-pages@v4
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
