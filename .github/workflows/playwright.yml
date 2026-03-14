@@ -30,6 +30,9 @@ jobs:
     - name: Generate Flaky Test Report
       run: node scripts/flaky-tests.js
 
+    - name: Update Persistent History
+      run: node scripts/generate-dashboard.js
+
     - name: Generate Allure Report
       if: always()
       run: |
