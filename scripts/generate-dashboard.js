@@ -5,6 +5,7 @@ const resultsDir = path.join(__dirname, '..', 'reports/allure-results');
 const historyFile = path.join(__dirname, '..', 'analytics', 'history.json');
 const dashboardHistory = path.join(__dirname, '..', 'dashboard', 'history.json');
 
+const dashboardDir = path.dirname(dashboardHistory);
 if (!fs.existsSync(dashboardDir)) fs.mkdirSync(dashboardDir, { recursive: true });
 
 // Check if results folder exists
@@ -23,12 +24,20 @@ let todayData = { total: 0, passed: 0, failed: 0, flaky: 0, stabilityScore: "0%"
 const resultFiles = fs.readdirSync(resultsDir).filter(f => f.endsWith('-result.json'));
 for (const file of resultFiles) {
   const data = JSON.parse(fs.readFileSync(path.join(resultsDir, file), 'utf8'));
-  todayData.total += data.total || 0;
-  todayData.passed += data.passed || 0;
-  todayData.failed += data.failed || 0;
-  if (data.flakyTests) {
-    todayData.flaky += data.flakyTests.length;
-    todayData.flakyTests.push(...data.flakyTests);
+  console.log('Parsed data from', file, data);
+  // If the file is an array of results:
+  const results = Array.isArray(data) ? data : [data];
+
+  for (const r of results) {
+    todayData.total += 1;
+    if (r.status === 'passed') todayData.passed += 1;
+    else if (r.status === 'failed') todayData.failed += 1;
+    
+    if (data.flaky === true) {
+      const name = data.name;
+      todayData.flaky += 1;
+      todayData.flakyTests.push(name);
+    }
   }
 }
 
