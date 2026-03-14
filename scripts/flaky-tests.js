@@ -34,10 +34,6 @@ if (fs.existsSync(RESULTS_DIR)) {
   });
 }
 
-const readmeFile = "README.md";
-
-let readme = fs.readFileSync(readmeFile, "utf8");
-
 const flakySection = `
 ## ⚠️ Flaky Test Detection
 
@@ -51,12 +47,6 @@ ${unstableTests.length ? unstableTests.map(t => `- ${t}`).join("\n") : "None"}
 ${stableTests.length}
 `;
 
-readme = readme.replace(
-  /<!-- FLAKY_TESTS_START -->([\s\S]*?)<!-- FLAKY_TESTS_END -->/,
-  `<!-- FLAKY_TESTS_START -->\n${flakySection}\n<!-- FLAKY_TESTS_END -->`
-);
-
-fs.writeFileSync(readmeFile, readme);
 fs.writeFileSync("reports/flaky-tests.md", flakySection);
 
 console.log("Flaky test report generated");
