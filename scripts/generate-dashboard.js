@@ -8,16 +8,21 @@ const flakyFile = path.join(__dirname, '../reports/flaky-tests.md'); // optional
 let passed = 0;
 let failed = 0;
 let total = 0;
-let flakyTests = [];
+const flakyTests = [];
+const maxRetries = 2; // or read from Playwright config
 
-// Parse test results
 fs.readdirSync(resultsDir).forEach(file => {
   if (!file.endsWith('-result.json')) return;
   const data = JSON.parse(fs.readFileSync(path.join(resultsDir, file), 'utf8'));
+
   total++;
   if (data.status === 'passed') passed++;
   if (data.status === 'failed') failed++;
-  if (data.status === 'flaky') flakyTests.push(data.name); // custom flag
+
+  // Detect flaky: failed but retried successfully
+  if (data.attempts && data.attempts > 1 && data.status === 'passed') {
+    flakyTests.push(data.name);
+  }
 });
 
 // Calculate pass rate and stability
