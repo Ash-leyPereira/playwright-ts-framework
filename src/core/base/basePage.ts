@@ -4,6 +4,10 @@ export class BasePage {
 
  constructor(protected page: Page) {}
 
+ public getPage(): Page {
+    return this.page;
+  }
+
  async navigate(url: string) {
    await this.page.goto(url);
  }

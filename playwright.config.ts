@@ -6,12 +6,14 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
+  outputDir: 'reports/test-results',
   reporter: [
-    ['html'],
-    ['allure-playwright']
+    ['html', { outputFolder: 'reports/html-report', open: 'never' }],
+
+    ['allure-playwright', { outputFolder: 'reports/allure-results' }]
   ],
   use: {
-    headless: true,
+    headless: false,
     screenshot: "only-on-failure",
     video: "retain-on-failure",
     trace: "retain-on-failure",

@@ -17,6 +17,7 @@
       "@utils/*": ["src/core/utils/*"],
       "@api/*": ["src/api/*"],
       "@fixtures/*": ["src/fixtures/*"],
+      "@data/*": ["src/data/*"],
     },
     "types": ["node", "@playwright/test"],
     "strict": true
