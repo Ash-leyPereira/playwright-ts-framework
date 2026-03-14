@@ -14,7 +14,7 @@ export default defineConfig({
     ['allure-playwright', { resultsDir: 'reports/allure-results' }]
   ],
   use: {
-    headless: false,
+    headless: true,
     screenshot: "only-on-failure",
     video: "retain-on-failure",
     trace: "retain-on-failure",
