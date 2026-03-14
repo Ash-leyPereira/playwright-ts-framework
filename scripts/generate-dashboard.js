@@ -1,5 +1,5 @@
-import fs from 'fs';
-import path from 'path';
+const fs = require("fs");
+const path = require("path");
 
 const resultsDir = path.join(__dirname, '..', 'results', new Date().toISOString().slice(0,10));
 const historyFile = path.join(__dirname, '..', 'history', 'history.json');
