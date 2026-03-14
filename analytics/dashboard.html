@@ -47,9 +47,9 @@ fetchHistory().then(data => {
     <div><strong>Stability Score:</strong> ${lastRun.stabilityScore}%</div>
   `;
 
-  // List flaky tests
   const flakyList = document.getElementById('flakyList');
-  if (lastRun.flakyTests.length) {
+  flakyList.innerHTML = '';
+  if (lastRun.flakyTests.length > 0) {
     lastRun.flakyTests.forEach(t => {
       const li = document.createElement('li');
       li.textContent = t;
