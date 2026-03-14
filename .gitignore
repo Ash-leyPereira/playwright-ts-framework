@@ -5,3 +5,5 @@ reports/
 logs/
 allure-results/
 allure-report/
+!reports/.gitkeep
+!logs/.gitkeep
