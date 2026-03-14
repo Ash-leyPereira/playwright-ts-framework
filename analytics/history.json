@@ -1,9 +1,11 @@
 [
   {
-    "date": "2026-03-14",
     "total": 18,
     "passed": 9,
     "failed": 9,
-    "passRate": "50.00"
+    "flaky": 0,
+    "stabilityScore": "50.00%",
+    "flakyTests": [],
+    "timestamp": "2026-03-14T13:25:33.278Z"
   }
 ]
