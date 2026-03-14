@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const resultsDir = path.join(__dirname, '..', 'reports/allure-results');
-const historyFile = path.join(__dirname, '..', 'history', 'history.json');
+const historyFile = path.join(__dirname, '..', 'analytics', 'history.json');
 const dashboardHistory = path.join(__dirname, '..', 'dashboard', 'history.json');
 
 // Check if results folder exists
