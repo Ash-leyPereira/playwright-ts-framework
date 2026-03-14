@@ -35,6 +35,7 @@
 
 <!-- TEST_RESULTS_END -->
 
+### Flaky Tests (Last Run)
 <!-- FLAKY_TESTS_START -->
 
 ## ⚠️ Flaky Test Detection
@@ -62,7 +63,7 @@ None
 
 View automation trends here:
 
-https://ash-leypereira.github.io/playwright-ts-framework/dashboard.html
+[View Dashboard](https://ash-leypereira.github.io/playwright-ts-framework/analytics/dashboard.html)
 
 ## Framework Architecture
 
