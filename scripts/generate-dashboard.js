@@ -5,6 +5,8 @@ const resultsDir = path.join(__dirname, '..', 'reports/allure-results');
 const historyFile = path.join(__dirname, '..', 'analytics', 'history.json');
 const dashboardHistory = path.join(__dirname, '..', 'dashboard', 'history.json');
 
+if (!fs.existsSync(dashboardDir)) fs.mkdirSync(dashboardDir, { recursive: true });
+
 // Check if results folder exists
 if (!fs.existsSync(resultsDir)) {
   console.warn(`No results found for today at ${resultsDir}`);
