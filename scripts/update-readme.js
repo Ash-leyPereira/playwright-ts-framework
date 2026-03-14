@@ -13,6 +13,7 @@ let passed = 0;
 let failed = 0;
 let skipped = 0;
 let total = 0;
+let flaky = 0;
 
 /**
  * Read allure result files
@@ -40,6 +41,9 @@ if (fs.existsSync(RESULTS_DIR)) {
             skipped++;
             break;
         }
+        if (data.flaky === true) {
+          flaky++;
+        }
 
       } catch (err) {
         console.log(`Skipping invalid file: ${file}`);
@@ -48,16 +52,17 @@ if (fs.existsSync(RESULTS_DIR)) {
   });
 }
 
-const passRate = total === 0 ? 0 : ((passed / total) * 100).toFixed(2);
+const passRate = total > 0 ? ((passed / total) * 100).toFixed(2) : '0';
 const today = new Date().toISOString().split("T")[0];
 const stableTests = passed;
-const stabilityScore = total === 0 ? 0 : ((stableTests / total) * 100).toFixed(2);
+const stabilityScore = (total - flaky) > 0 ? ((stableTests / (total - flaky)) * 100).toFixed(2) : '0';
 
 console.log("Test Summary:");
 console.log(`Total: ${total}`);
 console.log(`Passed: ${passed}`);
 console.log(`Failed: ${failed}`);
 console.log(`Skipped: ${skipped}`);
+console.log(`Flaky: ${flaky}`);
 
 /**
  * Generate badges

@@ -53,10 +53,12 @@ const flaky = todayData.flaky || 0;
 
 todayData.passRate = total > 0
   ? ((passed / total) * 100).toFixed(2) + '%'
-  : '0%';
-todayData.stabilityScore = total > 0
-  ? ((passed/ (total - flaky)) * 100).toFixed(2) + '%'
-  : '0%';
+  : (failed > 0 ? '0%' : 'N/A');
+
+todayData.stabilityScore = (total - flaky) > 0
+  ? ((passed / (total - flaky)) * 100).toFixed(2) + '%'
+  : (failed > 0 ? '0%' : 'N/A');
+  
 todayData.timestamp = new Date().toISOString();
 
 // Load previous history

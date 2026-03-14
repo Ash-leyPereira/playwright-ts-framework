@@ -17,7 +17,6 @@
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 [![Allure Report](https://img.shields.io/badge/Allure-Report-orange)](https://ash-leypereira.github.io/playwright-ts-framework)
-[![Flaky Tests](https://img.shields.io/badge/flaky_tests-report-orange)](https://Ash-leyPereira.github.io/playwright-ts-framework)
 
 <!-- TEST_RESULTS_START -->
 
@@ -71,37 +70,59 @@ This repository demonstrates modern QA automation practices including:
 ---
 
 # 📂 Project Structure
-
 ```
 playwright-ts-framework
 │
 ├── tests
-│   └── ui
+│   ├── ui                                  # UI Tests
+│   │
+│   └── api                                 # API Tests
 │
-├── pages
-│   └── page objects
+├── src
+│   ├── pages                               # Page Objects
+│   │
+│   ├── api                                 # API Library
+│   │
+│   ├── config                              # Envrionment Configurations
+│   │
+│   ├── data                                # Test data Library
+│   │
+│   └── core
+│       ├── base                            # Base page
+│       │
+│       ├── fixtures                        # Reusable Test Fixtures
+│       │
+|       └── utils                           # Utility Helper Library
 │
-├── fixtures
-│   └── reusable test fixtures
+├── scripts                                 # Reporting Reusable Scripts
 │
-├── utils
-│   └── helper functions
+├── analytics                               # Analytics Dashboard Library
 │
-├── config
-│   └── environment configurations
+├── logs                                    # Log Operation Data
 │
-├── reports
+├── reports                                 # Generated Reports Data
 │   ├── html-report
+│   │
 │   ├── allure-results
+│   │
 │   ├── allure-report
+│   │
 │   └── test-results
 │
-├── .github/workflows
-│   └── playwright.yml
+├── .github
+│   └── workflows                           # Github Actions Workflows
 │
-├── playwright.config.ts
-├── package.json
-└── Dockerfile
+├── docs                                    # Framework Documentations 
+│
+├── playwright.config.ts                    # Playwright Configurations
+│
+├── package.json                            # Package File (Dependency mappings)
+│
+├── package-lock.json                       # Package Lock File (Dependency mappings)
+│
+├── .gitignore                              # Ignore file (Git)
+│
+└── Dockerfile                              # Docker Configurations
 ```
 
 ---
@@ -111,7 +132,7 @@ playwright-ts-framework
 Clone the repository:
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/playwright-ts-framework.git
+git clone https://github.com/Ash-leyPereira/playwright-ts-framework.git
 cd playwright-ts-framework
 ```
 
@@ -227,8 +248,7 @@ Automated tests run using GitHub Actions.
 
 Pipeline triggers:
 
-- push to `main`
-- pull requests
+- push to `main` or `master`
 
 CI pipeline performs:
 
