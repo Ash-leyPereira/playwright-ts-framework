@@ -53,3 +53,12 @@ jobs:
         git add README.md
         git commit -m "docs: update automation stats" || echo "No changes"
         git push
+    
+    - name: Detect flaky tests
+      run: node scripts/flaky-tests.js
+
+    - name: Upload flaky test report
+      uses: actions/upload-artifact@v4
+      with:
+        name: flaky-tests
+        path: reports/flaky-tests.md

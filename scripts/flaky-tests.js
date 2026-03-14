@@ -1,0 +1,52 @@
+const fs = require("fs");
+const path = require("path");
+
+const RESULTS_DIR = "reports/allure-results";
+
+let flakyTests = [];
+let unstableTests = [];
+let stableTests = [];
+
+if (fs.existsSync(RESULTS_DIR)) {
+
+  const files = fs.readdirSync(RESULTS_DIR);
+
+  files.forEach(file => {
+
+    if (!file.endsWith("-result.json")) return;
+
+    const data = JSON.parse(
+      fs.readFileSync(path.join(RESULTS_DIR, file))
+    );
+
+    const name = data.name;
+
+    if (data.flaky === true) {
+      flakyTests.push(name);
+    }
+    else if (data.status === "failed") {
+      unstableTests.push(name);
+    }
+    else if (data.status === "passed") {
+      stableTests.push(name);
+    }
+
+  });
+}
+
+const report = `
+## ⚠️ Flaky Test Detection
+
+### Flaky Tests
+${flakyTests.length ? flakyTests.map(t => `- ${t}`).join("\n") : "None"}
+
+### Unstable Tests
+${unstableTests.length ? unstableTests.map(t => `- ${t}`).join("\n") : "None"}
+
+### Stable Tests
+Total: ${stableTests.length}
+`;
+
+fs.writeFileSync("reports/flaky-tests.md", report);
+
+console.log("Flaky test report generated");
