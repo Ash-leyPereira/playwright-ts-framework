@@ -6,7 +6,9 @@
   "directories": {
     "test": "tests"
   },
-  "scripts": {},
+  "scripts": {
+    "allure:generate": "allure generate reports/allure-results --clean -o reports/allure-report"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Ash-leyPereira/playwright-ts-framework.git"
