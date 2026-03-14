@@ -12,6 +12,7 @@
     "outDir": "dist",
     "baseUrl": ".",
     "paths": {
+      "@core/*": ["src/core/*"],
       "@pages/*": ["src/pages/*"],
       "@utils/*": ["src/core/utils/*"],
       "@api/*": ["src/api/*"]
