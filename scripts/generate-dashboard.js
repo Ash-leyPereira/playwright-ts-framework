@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const resultsDir = path.join(__dirname, '..', 'results', new Date().toISOString().slice(0,10));
+const resultsDir = path.join(__dirname, '..', 'reports/allure-results');
 const historyFile = path.join(__dirname, '..', 'history', 'history.json');
 const dashboardHistory = path.join(__dirname, '..', 'dashboard', 'history.json');
 
@@ -15,10 +15,10 @@ if (!fs.existsSync(resultsDir)) {
 const historyDir = path.dirname(historyFile);
 if (!fs.existsSync(historyDir)) fs.mkdirSync(historyDir, { recursive: true });
 
-let todayData = { total: 0, passed: 0, failed: 0, flaky: 0, flakyTests: [] };
+let todayData = { total: 0, passed: 0, failed: 0, flaky: 0, stabilityScore: "0%", flakyTests: [] };
 
 // Read all result files
-const resultFiles = fs.readdirSync(resultsDir).filter(f => f.endsWith('.json'));
+const resultFiles = fs.readdirSync(resultsDir).filter(f => f.endsWith('-result.json'));
 for (const file of resultFiles) {
   const data = JSON.parse(fs.readFileSync(path.join(resultsDir, file), 'utf8'));
   todayData.total += data.total || 0;
@@ -31,7 +31,12 @@ for (const file of resultFiles) {
 }
 
 // Calculate stability
-todayData.stabilityScore = ((todayData.total - todayData.failed - todayData.flaky) / todayData.total * 100).toFixed(2) + '%';
+const total = todayData.total || 0;
+const failed = todayData.failed || 0;
+const flaky = todayData.flaky || 0;
+todayData.stabilityScore = total > 0
+  ? (((total - failed - flaky) / total) * 100).toFixed(2) + '%'
+  : '0%';
 todayData.timestamp = new Date().toISOString();
 
 // Load previous history
