@@ -58,6 +58,5 @@ readme = readme.replace(
 
 fs.writeFileSync(readmeFile, readme);
 fs.writeFileSync("reports/flaky-tests.md", flakySection);
-fs.writeFileSync("reports/allure-report/flaky-tests.md", flakySection);
 
 console.log("Flaky test report generated");

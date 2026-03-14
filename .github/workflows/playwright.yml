@@ -2,77 +2,64 @@ name: Playwright Tests
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
 
 jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 60
-
     steps:
 
     - uses: actions/checkout@v4
 
-    - uses: actions/setup-node@v4
+    - name: Setup Node
+      uses: actions/setup-node@v4
       with:
         node-version: lts/*
-
-    - uses: actions/setup-java@v4
-      with:
-        distribution: temurin
-        java-version: 17
 
     - name: Install dependencies
       run: npm ci
 
-    - name: Install Playwright browsers
+    - name: Install Playwright Browsers
       run: npx playwright install --with-deps
 
     - name: Run Playwright tests
-      run: npm run test
-      continue-on-error: true
+      run: npx playwright test
 
-    - name: Generate Allure Report
-      if: always()
-      run: npx allure generate reports/allure-results --clean -o reports/allure-report
-
-    - name: Deploy Allure Report
-      if: always()
-      uses: peaceiris/actions-gh-pages@v4
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: reports/allure-report
-
-    - name: Update README with automation stats
-      run: node scripts/update-readme.js
-    
-    - name: Detect flaky tests
+    - name: Generate Flaky Test Report
       run: node scripts/flaky-tests.js
 
-    - name: Upload flaky test report
-      uses: actions/upload-artifact@v4
-      with:
-        name: flaky-tests
-        path: reports/flaky-tests.md
-
-    - name: Generate analytics data
-      run: node scripts/generate-dashboard.js
-
-    - name: Commit analytics history
+    - name: Generate Allure Report
       run: |
-        git config --global user.name "github-actions"
-        git config --global user.email "github-actions@github.com"
-        git add analytics/history.json
-        git commit -m "update automation analytics" || echo "No changes"
-        git push
-    
-    - name: Copy analytics dashboard
-      run: cp analytics/dashboard.html reports/allure-report/
+        npx allure generate reports/allure-results --clean -o reports/allure-report
 
-    - name: Commit README update
+    - name: Update README with latest stats
+      run: node scripts/update-readme.js
+
+    - name: Copy Analytics to Allure Report Folder
+      run: |
+        mkdir -p reports/allure-report/analytics
+        cp analytics/dashboard.html reports/allure-report/analytics/dashboard.html
+        cp analytics/history.json reports/allure-report/analytics/history.json
+        cp reports/flaky-tests.md reports/allure-report/analytics/flaky-tests.md
+
+    - name: Deploy All Reports & Analytics to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v6
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./reports/allure-report
+        publish_branch: gh-pages
+        user_name: "github-actions"
+        user_email: "github-actions@github.com"
+        keep_files: true
+
+    - name: Commit Analytics and README Updates
       run: |
         git config --global user.name "github-actions"
         git config --global user.email "github-actions@github.com"
         git add README.md
-        git commit -m "docs: update automation stats" || echo "No changes"
+        git add analytics/history.json
+        git commit -m "update dashboard & stats" || echo "No changes"
         git push

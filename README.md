@@ -18,6 +18,7 @@
 Automation results will appear here
 <!-- TEST_RESULTS_END -->
 
+### Flaky Tests (Last Run)
 <!-- FLAKY_TESTS_START -->
 Flaky test results will appear here
 <!-- FLAKY_TESTS_END -->
@@ -26,7 +27,7 @@ Flaky test results will appear here
 
 View automation trends here:
 
-https://ash-leypereira.github.io/playwright-ts-framework/dashboard.html
+[View Dashboard](https://ash-leypereira.github.io/playwright-ts-framework/analytics/dashboard.html)
 
 ## Framework Architecture
 
