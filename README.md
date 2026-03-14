@@ -1,22 +1,22 @@
 # Playwright TypeScript Automation Framework
 
 ![Playwright Tests](https://github.com/Ash-leyPereira/playwright-ts-framework/actions/workflows/playwright.yml/badge.svg)
+
+<!-- BADGES_START -->
+![Tests](https://img.shields.io/badge/tests-120-blue)
+![Pass Rate](https://img.shields.io/badge/pass_rate-95%25-brightgreen)
+<!-- BADGES_END -->
+
 ![Node](https://img.shields.io/badge/node-%3E=18-green)
 ![Playwright](https://img.shields.io/badge/playwright-test-blue)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
-## 📊 Live Test Dashboard
+[![Allure Report](https://img.shields.io/badge/Allure-Report-orange)](https://ash-leypereira.github.io/playwright-ts-framework)
 
-View the latest automation report:
 
-https://ash-leypereira.github.io/playwright-ts-framework
-
-The dashboard includes:
-
-- test execution history
-- pass/fail trend graphs
-- failure analysis
-- execution timeline
+<!-- TEST_RESULTS_START -->
+Automation results will appear here
+<!-- TEST_RESULTS_END -->
 
 ## Framework Architecture
 
