@@ -43,13 +43,13 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: reports/allure-report
 
-    - name: Update README with test results
+    - name: Update README with automation stats
       run: node scripts/update-readme.js
 
-    - name: Commit updated README
+    - name: Commit README update
       run: |
         git config --global user.name "github-actions"
         git config --global user.email "github-actions@github.com"
         git add README.md
-        git commit -m "docs: update automation stats"
+        git commit -m "docs: update automation stats" || echo "No changes"
         git push
