@@ -5,7 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Automation Analytics Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image/2.6.0/dom-to-image.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
     body {
       font-family: 'Roboto', sans-serif;
@@ -14,6 +19,7 @@
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: #333;
       min-height: 100vh;
+      transition: background 0.3s;
     }
     .container {
       max-width: 1200px;
@@ -21,16 +27,52 @@
       background: white;
       border-radius: 12px;
       box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-      overflow: hidden;
+      overflow: visible !important;
+      animation: fadeIn 0.5s ease-in;
+
     }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     header {
       background: #1a73e8;
       color: white;
       padding: 20px;
       text-align: center;
+      position: relative;
     }
+    header .refresh-btn {
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      padding: 10px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    header .refresh-btn:hover { background: rgba(255,255,255,0.4); }
+    header .download-btns {
+      position: absolute;
+      top: 10px;
+      left: 20px;
+      display: flex;
+      gap: 10px;
+    }
+    header .download-btns button {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    header .download-btns button:hover { background: rgba(255,255,255,0.4); }
     h2 { margin: 0; font-weight: 500; }
     .loading { text-align: center; padding: 50px; font-size: 18px; color: #666; }
+    .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #1a73e8; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     .summary {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -44,13 +86,19 @@
       border-radius: 8px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
       text-align: center;
-      transition: transform 0.2s;
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
     }
-    .stat-card:hover { transform: translateY(-5px); }
+    .stat-card:hover { transform: translateY(-5px); box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
     .stat-card h3 { margin: 0 0 10px; font-size: 14px; color: #666; text-transform: uppercase; }
     .stat-card p { margin: 0; font-size: 24px; font-weight: 500; color: #1a73e8; }
-    .charts { padding: 20px; }
-    .chart-container { margin-bottom: 40px; }
+    .charts {
+      padding: 20px;
+      display: grid;
+      gap: 20px;
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .chart-container { margin-bottom: 40px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
     canvas { max-width: 100%; height: 400px; }
     .flaky-section { padding: 20px; background: #f8f9fa; }
     .flaky-list { list-style: none; padding: 0; }
@@ -60,42 +108,66 @@
       padding: 10px;
       border-radius: 4px;
       box-shadow: 0 1px 5px rgba(0,0,0,0.1);
+      transition: background 0.2s;
     }
+    .flaky-list li:hover { background: #f0f0f0; }
     .no-flaky { color: #666; font-style: italic; }
     footer { text-align: center; padding: 10px; background: #1a73e8; color: white; }
+    .charts {
+      padding: 20px;
+      display: grid;
+      gap: 20px;
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .chart-container.trend {
+      grid-column: 1 / -1; /* span both columns */
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
-      <h2>🚀 Automation Analytics Dashboard</h2>
+      <div class="download-btns">
+        <button onclick="downloadPNG()"><i class="fas fa-image"></i> PNG</button>
+      </div>
+      <button class="refresh-btn" onclick="location.reload()"><i class="fas fa-sync-alt"></i></button>
+      <h2><i class="fas fa-rocket"></i> Automation Analytics Dashboard</h2>
       <p>Track your test suite performance and stability</p>
     </header>
 
-    <div id="loading" class="loading">Loading dashboard data...</div>
+    <div id="loading" class="loading">
+      <div class="spinner"></div>
+      Loading dashboard data...
+    </div>
 
     <div id="content" style="display: none;">
       <section class="summary" id="summary"></section>
 
       <section class="charts">
-        <div class="chart-container">
-          <h3>📈 Test Trends</h3>
+        <div class="chart-container trend">
+          <h3><i class="fas fa-chart-bar"></i> Test Trends</h3>
           <canvas id="trendChart"></canvas>
         </div>
+
         <div class="chart-container">
-          <h3>🔄 Flaky Tests Trends</h3>
+          <h3><i class="fas fa-chart-line"></i> Pass Rate / Stability</h3>
+          <canvas id="stabilityChart"></canvas>
+        </div>
+
+        <div class="chart-container">
+          <h3><i class="fas fa-chart-bar"></i> Flaky Tests Trends</h3>
           <canvas id="flakyChart"></canvas>
         </div>
       </section>
 
       <section class="flaky-section">
-        <h3>⚠️ Flaky Tests (Latest Run)</h3>
+        <h3><i class="fas fa-exclamation-triangle"></i> Flaky Tests (Latest Run)</h3>
         <ul id="flakyList"></ul>
       </section>
     </div>
 
     <footer>
-      <p>Generated by Playwright Framework</p>
+      <p><i class="fas fa-code"></i> Generated by Playwright Framework</p>
     </footer>
   </div>
 
@@ -106,9 +178,14 @@
       return response.json();
     }
 
-    fetchHistory().then(data => {
+    function renderDashboard(data) {
       document.getElementById('loading').style.display = 'none';
       document.getElementById('content').style.display = 'block';
+
+      if (!data || data.length === 0) {
+        document.getElementById('content').innerHTML = '<p style="text-align: center; padding: 50px; color: #666;"><i class="fas fa-info-circle"></i> No data available. Run tests to generate history.</p>';
+        return;
+      }
 
       const labels = data.map(r => new Date(r.timestamp).toLocaleDateString());
       const passRate = data.map(r => parseFloat(r.passRate));
@@ -120,12 +197,12 @@
       const lastRun = data[data.length - 1];
       const summary = document.getElementById('summary');
       summary.innerHTML = `
-        <div class="stat-card"><h3>Total Tests</h3><p>${lastRun.total}</p></div>
-        <div class="stat-card"><h3>Passed</h3><p>${lastRun.passed}</p></div>
-        <div class="stat-card"><h3>Failed</h3><p>${lastRun.failed}</p></div>
-        <div class="stat-card"><h3>Pass Rate</h3><p>${lastRun.passRate}</p></div>
-        <div class="stat-card"><h3>Flaky Tests</h3><p>${lastRun.flaky}</p></div>
-        <div class="stat-card"><h3>Stability Score</h3><p>${lastRun.stabilityScore}</p></div>
+        <div class="stat-card"><h3><i class="fas fa-list"></i> Total Tests</h3><p>${lastRun.total}</p></div>
+        <div class="stat-card"><h3><i class="fas fa-check-circle"></i> Passed</h3><p>${lastRun.passed}</p></div>
+        <div class="stat-card"><h3><i class="fas fa-times-circle"></i> Failed</h3><p>${lastRun.failed}</p></div>
+        <div class="stat-card"><h3><i class="fas fa-percentage"></i> Pass Rate</h3><p>${lastRun.passRate}</p></div>
+        <div class="stat-card"><h3><i class="fas fa-random"></i> Flaky Tests</h3><p>${lastRun.flaky}</p></div>
+        <div class="stat-card"><h3><i class="fas fa-shield-alt"></i> Stability Score</h3><p>${lastRun.stabilityScore}</p></div>
       `;
 
       const flakyList = document.getElementById('flakyList');
@@ -133,26 +210,49 @@
       if (lastRun.flakyTests.length > 0) {
         lastRun.flakyTests.forEach(t => {
           const li = document.createElement('li');
-          li.textContent = t;
+          li.innerHTML = `<i class="fas fa-bug"></i> ${t}`;
           flakyList.appendChild(li);
         });
       } else {
-        flakyList.innerHTML = '<li class="no-flaky">No flaky tests detected</li>';
+        flakyList.innerHTML = '<li class="no-flaky"><i class="fas fa-check"></i> No flaky tests detected</li>';
       }
 
       new Chart(document.getElementById('trendChart').getContext('2d'), {
-        type: 'line',
+        type: 'bar',
         data: {
           labels,
           datasets: [
-            { label: 'Pass Rate (%)', data: passRate, borderColor: '#28a745', backgroundColor: 'rgba(40,167,69,0.2)', fill: true, tension: 0.3 },
-            { label: 'Failed Tests', data: failedTests, borderColor: '#dc3545', backgroundColor: 'rgba(220,53,69,0.2)', fill: true, tension: 0.3 },
-            { label: 'Stability Score (%)', data: stabilityScore, borderColor: '#ffc107', backgroundColor: 'rgba(255,193,7,0.2)', fill: true, tension: 0.3 }
+            { label: 'Passed', data: data.map(r => r.passed), backgroundColor: '#28a745', stack: 'tests' },
+            { label: 'Failed', data: failedTests, backgroundColor: '#dc3545', stack: 'tests' }
           ]
         },
         options: {
           responsive: true,
-          plugins: { legend: { position: 'top' }, title: { display: true, text: 'Automation Test Trends' } },
+          plugins: {
+            legend: { position: 'top' },
+            title: { display: true, text: 'Test Trends' }
+          },
+          scales: {
+            x: { stacked: true },
+            y: { stacked: true, beginAtZero: true }
+          }
+        }
+      });
+      new Chart(document.getElementById('stabilityChart').getContext('2d'), {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            { label: 'Pass Rate (%)', data: passRate, borderColor: '#28a745', backgroundColor: '#28a745', fill: false, tension: 0.3, pointRadius: 5 },
+            { label: 'Stability Score (%)', data: stabilityScore, borderColor: '#ffc107', backgroundColor: '#ffc107', fill: false, tension: 0.3, pointRadius: 5 }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'top' },
+            title: { display: true, text: 'Pass Rate & Stability Trends' }
+          },
           scales: { y: { beginAtZero: true } }
         }
       });
@@ -162,18 +262,51 @@
         data: {
           labels,
           datasets: [
-            { label: 'Flaky', data: flaky, backgroundColor: 'orange' },
-            { label: 'Total', data: totalTests, backgroundColor: 'rgba(0,123,255,0.5)' }
+            { label: 'Total Tests', data: totalTests, backgroundColor: 'blue', stack: 'tests' },
+            { label: 'Flaky Tests', data: flaky, backgroundColor: 'yellow', stack: 'tests' }
           ]
         },
         options: {
           responsive: true,
-          plugins: { legend: { position: 'top' }, title: { display: true, text: 'Flaky Tests Trends' } },
-          scales: { y: { beginAtZero: true } }
+          plugins: {
+            legend: { position: 'top' },
+            title: { display: true, text: 'Flaky Tests Trends' }
+          },
+          scales: {
+            x: { stacked: true },
+            y: { stacked: true, beginAtZero: true }
+          }
         }
       });
-    }).catch(err => {
-      document.getElementById('loading').innerHTML = 'Error loading dashboard: ' + err.message;
+    }
+
+    async function downloadPNG() {
+      const node = document.querySelector('.container');
+      const rect = node.getBoundingClientRect();
+      const dataUrl = await domtoimage.toPng(node, {
+        bgcolor: '#ffffff',
+        quality: 1,
+        width: node.scrollWidth,          // full scrollable width
+        height: node.scrollHeight,        // full scrollable height
+        style: {
+          width: node.scrollWidth + 'px', // force canvas width
+          height: node.scrollHeight + 'px', // force canvas height
+          transform: 'scale(1)',
+          transformOrigin: 'top left'
+        },
+        useCORS: true
+      });
+
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = 'dashboard.png';
+      a.click();
+
+
+    }
+
+    fetchHistory().then(renderDashboard).catch(err => {
+      document.getElementById('loading').innerHTML = '<i class="fas fa-exclamation-circle"></i> Error loading dashboard: ' + err.message;
       console.error(err);
     });
   </script>
