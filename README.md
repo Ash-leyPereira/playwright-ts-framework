@@ -36,7 +36,26 @@
 <!-- TEST_RESULTS_END -->
 
 <!-- FLAKY_TESTS_START -->
-Flaky test results will appear here
+
+## ⚠️ Flaky Test Detection
+
+### Flaky Tests
+None
+
+### Unstable Tests
+- API Test
+- API Test
+- API Test
+- API Test
+- API Test
+- API Test
+- API Test
+- API Test
+- API Test
+
+### Stable Tests
+9
+
 <!-- FLAKY_TESTS_END -->
 
 ## 📊 Automation Analytics Dashboard
