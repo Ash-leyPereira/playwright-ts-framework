@@ -45,6 +45,8 @@ if (fs.existsSync(RESULTS_DIR)) {
 
 const passRate = total === 0 ? 0 : ((passed / total) * 100).toFixed(2);
 const today = new Date().toISOString().split("T")[0];
+const stableTests = passed;
+const stabilityScore = total === 0 ? 0 : ((stableTests / total) * 100).toFixed(2);
 
 console.log("Test Summary:");
 console.log(`Total: ${total}`);
@@ -60,13 +62,14 @@ const badgeSection = `
 ![Passed](https://img.shields.io/badge/passed-${passed}-brightgreen)
 ![Failed](https://img.shields.io/badge/failed-${failed}-red)
 ![Pass Rate](https://img.shields.io/badge/pass_rate-${passRate}%25-green)
+![Stability](https://img.shields.io/badge/stability-${stabilityScore}%25-blue)
 `;
 
 /**
  * Generate stats table
  */
 const statsSection = `
-## 🚀 Automation Status
+## 🚀 Automation Execution Status
 
 | Metric | Value |
 |------|------|
@@ -75,6 +78,7 @@ const statsSection = `
 | Failed | ${failed} |
 | Skipped | ${skipped} |
 | Pass Rate | ${passRate}% |
+| Stability Score | ${stabilityScore}% |
 | Last Run | ${today} |
 `;
 
