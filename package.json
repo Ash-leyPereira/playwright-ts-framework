@@ -38,6 +38,7 @@
     "@types/winston": "^2.4.4",
     "allure-playwright": "^3.6.0",
     "dotenv": "^17.3.1",
+    "fs-extra": "^11.3.4",
     "winston": "^3.19.0"
   }
 }
