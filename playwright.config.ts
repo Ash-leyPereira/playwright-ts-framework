@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import 'dotenv/config';
 
 export default defineConfig({
   testDir: './tests/',
@@ -10,7 +11,7 @@ export default defineConfig({
   reporter: [
     ['html', { outputFolder: 'reports/html-report', open: 'never' }],
 
-    ['allure-playwright', { outputFolder: 'reports/allure-results' }]
+    ['allure-playwright', { resultsDir: 'reports/allure-results' }]
   ],
   use: {
     headless: false,
