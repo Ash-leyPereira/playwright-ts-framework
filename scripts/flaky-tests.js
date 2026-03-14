@@ -34,7 +34,11 @@ if (fs.existsSync(RESULTS_DIR)) {
   });
 }
 
-const report = `
+const readmeFile = "README.md";
+
+let readme = fs.readFileSync(readmeFile, "utf8");
+
+const flakySection = `
 ## ⚠️ Flaky Test Detection
 
 ### Flaky Tests
@@ -44,9 +48,16 @@ ${flakyTests.length ? flakyTests.map(t => `- ${t}`).join("\n") : "None"}
 ${unstableTests.length ? unstableTests.map(t => `- ${t}`).join("\n") : "None"}
 
 ### Stable Tests
-Total: ${stableTests.length}
+${stableTests.length}
 `;
 
-fs.writeFileSync("reports/flaky-tests.md", report);
+readme = readme.replace(
+  /<!-- FLAKY_TESTS_START -->([\s\S]*?)<!-- FLAKY_TESTS_END -->/,
+  `<!-- FLAKY_TESTS_START -->\n${flakySection}\n<!-- FLAKY_TESTS_END -->`
+);
+
+fs.writeFileSync(readmeFile, readme);
+fs.writeFileSync("reports/flaky-tests.md", flakySection);
+fs.writeFileSync("reports/allure-report/flaky-tests.md", flakySection);
 
 console.log("Flaky test report generated");
