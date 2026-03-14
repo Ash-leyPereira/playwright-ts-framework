@@ -12,10 +12,15 @@
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 [![Allure Report](https://img.shields.io/badge/Allure-Report-orange)](https://ash-leypereira.github.io/playwright-ts-framework)
+[![Flaky Tests](https://img.shields.io/badge/flaky_tests-report-orange)](https://Ash-leyPereira.github.io/playwright-ts-framework)
 
 <!-- TEST_RESULTS_START -->
 Automation results will appear here
 <!-- TEST_RESULTS_END -->
+
+<!-- FLAKY_TESTS_START -->
+Flaky test results will appear here
+<!-- FLAKY_TESTS_END -->
 
 ## Framework Architecture
 
