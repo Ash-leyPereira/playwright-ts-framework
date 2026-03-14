@@ -1,6 +1,11 @@
 const fs = require("fs");
 const path = require("path");
 
+if (!process.env.CI) {
+  console.log('Skipping README update (not running on CI)');
+  process.exit(0);
+}
+
 const RESULTS_DIR = "reports/allure-results";
 const README_FILE = "README.md";
 
