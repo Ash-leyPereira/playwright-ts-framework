@@ -13,6 +13,7 @@
 
 [![Allure Report](https://img.shields.io/badge/Allure-Report-orange)](https://ash-leypereira.github.io/playwright-ts-framework)
 
+## Automation Execution Stats
 
 <!-- TEST_RESULTS_START -->
 Automation results will appear here

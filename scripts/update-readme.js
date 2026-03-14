@@ -1,28 +1,71 @@
 const fs = require("fs");
 const path = require("path");
 
-const resultsDir = "reports/allure-results";
+const RESULTS_DIR = "reports/allure-results";
+const README_FILE = "README.md";
 
 let passed = 0;
 let failed = 0;
+let skipped = 0;
 let total = 0;
 
-fs.readdirSync(resultsDir).forEach(file => {
-  if (file.endsWith("-result.json")) {
-    const data = JSON.parse(
-      fs.readFileSync(path.join(resultsDir, file))
-    );
+/**
+ * Read allure result files
+ */
+if (fs.existsSync(RESULTS_DIR)) {
+  const files = fs.readdirSync(RESULTS_DIR);
 
-    total++;
+  files.forEach(file => {
+    if (file.endsWith("-result.json")) {
+      const filePath = path.join(RESULTS_DIR, file);
 
-    if (data.status === "passed") passed++;
-    if (data.status === "failed") failed++;
-  }
-});
+      try {
+        const data = JSON.parse(fs.readFileSync(filePath, "utf8"));
 
-const passRate = ((passed / total) * 100).toFixed(2);
+        total++;
 
-const stats = `
+        switch (data.status) {
+          case "passed":
+            passed++;
+            break;
+          case "failed":
+            failed++;
+            break;
+          case "skipped":
+            skipped++;
+            break;
+        }
+
+      } catch (err) {
+        console.log(`Skipping invalid file: ${file}`);
+      }
+    }
+  });
+}
+
+const passRate = total === 0 ? 0 : ((passed / total) * 100).toFixed(2);
+const today = new Date().toISOString().split("T")[0];
+
+console.log("Test Summary:");
+console.log(`Total: ${total}`);
+console.log(`Passed: ${passed}`);
+console.log(`Failed: ${failed}`);
+console.log(`Skipped: ${skipped}`);
+
+/**
+ * Generate badges
+ */
+const badgeSection = `
+![Tests](https://img.shields.io/badge/tests-${total}-blue)
+![Passed](https://img.shields.io/badge/passed-${passed}-brightgreen)
+![Failed](https://img.shields.io/badge/failed-${failed}-red)
+![Pass Rate](https://img.shields.io/badge/pass_rate-${passRate}%25-green)
+`;
+
+/**
+ * Generate stats table
+ */
+const statsSection = `
 ## 🚀 Automation Status
 
 | Metric | Value |
@@ -30,25 +73,35 @@ const stats = `
 | Total Tests | ${total} |
 | Passed | ${passed} |
 | Failed | ${failed} |
+| Skipped | ${skipped} |
 | Pass Rate | ${passRate}% |
-| Last Run | ${new Date().toISOString().split("T")[0]} |
+| Last Run | ${today} |
 `;
 
-const badge = `![Tests](https://img.shields.io/badge/tests-${total}-blue)
-![Pass Rate](https://img.shields.io/badge/pass_rate-${passRate}%25-brightgreen)
-`
+/**
+ * Read README
+ */
+let readme = fs.readFileSync(README_FILE, "utf8");
 
-const readme = fs.readFileSync("README.md", "utf8");
-
-const updated = readme.replace(
-  /<!-- TEST_RESULTS_START -->([\s\S]*?)<!-- TEST_RESULTS_END -->/,
-  `<!-- TEST_RESULTS_START -->\n${stats}\n<!-- TEST_RESULTS_END -->`
-);
-updated = readme.replace(
+/**
+ * Update badges
+ */
+readme = readme.replace(
   /<!-- BADGES_START -->([\s\S]*?)<!-- BADGES_END -->/,
-  `<!-- BADGES_START -->\n${badge}\n<!-- BADGES_END -->`
-);    
+  `<!-- BADGES_START -->\n${badgeSection}\n<!-- BADGES_END -->`
+);
 
-fs.writeFileSync("README.md", updated);
+/**
+ * Update stats
+ */
+readme = readme.replace(
+  /<!-- TEST_RESULTS_START -->([\s\S]*?)<!-- TEST_RESULTS_END -->/,
+  `<!-- TEST_RESULTS_START -->\n${statsSection}\n<!-- TEST_RESULTS_END -->`
+);
 
-console.log("README updated with latest test stats");
+/**
+ * Write updated README
+ */
+fs.writeFileSync(README_FILE, readme);
+
+console.log("README updated successfully!");
