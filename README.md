@@ -3,8 +3,12 @@
 ![Playwright Tests](https://github.com/Ash-leyPereira/playwright-ts-framework/actions/workflows/playwright.yml/badge.svg)
 
 <!-- BADGES_START -->
-![Tests](https://img.shields.io/badge/tests-120-blue)
-![Pass Rate](https://img.shields.io/badge/pass_rate-95%25-brightgreen)
+
+![Tests](https://img.shields.io/badge/tests-18-blue)
+![Passed](https://img.shields.io/badge/passed-9-brightgreen)
+![Failed](https://img.shields.io/badge/failed-9-red)
+![Pass Rate](https://img.shields.io/badge/pass_rate-50.00%25-green)
+
 <!-- BADGES_END -->
 
 ![Node](https://img.shields.io/badge/node-%3E=18-green)
@@ -16,7 +20,18 @@
 ## Automation Execution Stats
 
 <!-- TEST_RESULTS_START -->
-Automation results will appear here
+
+## 🚀 Automation Status
+
+| Metric | Value |
+|------|------|
+| Total Tests | 18 |
+| Passed | 9 |
+| Failed | 9 |
+| Skipped | 0 |
+| Pass Rate | 50.00% |
+| Last Run | 2026-03-14 |
+
 <!-- TEST_RESULTS_END -->
 
 ## Framework Architecture
