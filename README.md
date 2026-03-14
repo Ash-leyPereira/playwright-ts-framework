@@ -5,6 +5,19 @@
 ![Playwright](https://img.shields.io/badge/playwright-test-blue)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
+## 📊 Live Test Dashboard
+
+View the latest automation report:
+
+https://ash-leypereira.github.io/playwright-ts-framework
+
+The dashboard includes:
+
+- test execution history
+- pass/fail trend graphs
+- failure analysis
+- execution timeline
+
 ## Framework Architecture
 
 ![Framework Architecture](docs/frameworkArchitecture.png)
