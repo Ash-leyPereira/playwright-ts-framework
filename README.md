@@ -116,13 +116,13 @@ playwright-ts-framework
 │
 ├── playwright.config.ts                    # Playwright Configurations
 │
-├── package.json                            # Package File (Dependency mappings)
+├── package.json                            # Node.js Dependencies
 │
-├── package-lock.json                       # Package Lock File (Dependency mappings)
+├── package-lock.json                       # Node.js Dependencies (lock)
 │
 ├── .gitignore                              # Ignore file (Git)
 │
-└── Dockerfile                              # Docker Configurations
+└── Dockerfile                              # Docker setup for framework
 ```
 
 ---
