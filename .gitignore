@@ -7,3 +7,5 @@ allure-results/
 allure-report/
 !reports/.gitkeep
 !logs/.gitkeep
+history/
+dashboard/history.json
