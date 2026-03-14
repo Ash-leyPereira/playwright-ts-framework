@@ -45,14 +45,6 @@ jobs:
 
     - name: Update README with automation stats
       run: node scripts/update-readme.js
-
-    - name: Commit README update
-      run: |
-        git config --global user.name "github-actions"
-        git config --global user.email "github-actions@github.com"
-        git add README.md
-        git commit -m "docs: update automation stats" || echo "No changes"
-        git push
     
     - name: Detect flaky tests
       run: node scripts/flaky-tests.js
@@ -62,3 +54,25 @@ jobs:
       with:
         name: flaky-tests
         path: reports/flaky-tests.md
+
+    - name: Generate analytics data
+      run: node scripts/generate-dashboard.js
+
+    - name: Commit analytics history
+      run: |
+        git config --global user.name "github-actions"
+        git config --global user.email "github-actions@github.com"
+        git add analytics/history.json
+        git commit -m "update automation analytics" || echo "No changes"
+        git push
+    
+    - name: Copy analytics dashboard
+      run: cp analytics/dashboard.html reports/allure-report/
+
+    - name: Commit README update
+      run: |
+        git config --global user.name "github-actions"
+        git config --global user.email "github-actions@github.com"
+        git add README.md
+        git commit -m "docs: update automation stats" || echo "No changes"
+        git push

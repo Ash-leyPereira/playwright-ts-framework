@@ -39,6 +39,12 @@
 Flaky test results will appear here
 <!-- FLAKY_TESTS_END -->
 
+## 📊 Automation Analytics Dashboard
+
+View automation trends here:
+
+https://ash-leypereira.github.io/playwright-ts-framework/dashboard.html
+
 ## Framework Architecture
 
 ![Framework Architecture](docs/frameworkArchitecture.png)
