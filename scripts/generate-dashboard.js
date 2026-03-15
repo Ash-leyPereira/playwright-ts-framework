@@ -23,57 +23,60 @@ if (!fs.existsSync(resultsDir)) {
 const historyDir = path.dirname(historyFile);
 if (!fs.existsSync(historyDir)) fs.mkdirSync(historyDir, { recursive: true });
 
-let todayData = { total: 0, passed: 0, failed: 0, flaky: 0, stabilityScore: "0%", passRate: "0%", flakyTests: [] };
+let total = 0;
+let passed = 0;
+let failed = 0;
+let flaky = 0;
 
-// Read all result files
-const resultFiles = fs.readdirSync(resultsDir).filter(f => f.endsWith('-result.json'));
-for (const file of resultFiles) {
-  const data = JSON.parse(fs.readFileSync(path.join(resultsDir, file), 'utf8'));
-  // If the file is an array of results:
-  const results = Array.isArray(data) ? data : [data];
+let results = [];
 
-  for (const r of results) {
-    todayData.total += 1;
-    if (r.status === 'passed') todayData.passed += 1;
-    else if (r.status === 'failed') todayData.failed += 1;
-    
-    if (data.flaky === true) {
-      const name = data.name;
-      todayData.flaky += 1;
-      todayData.flakyTests.push(name);
-    }
-  }
-}
+fs.readdirSync(resultsDir).forEach(file => {
 
-// Calculate stability
-const total = todayData.total || 0;
-const passed = todayData.passed || 0;
-const failed = todayData.failed || 0;
-const flaky = todayData.flaky || 0;
+if (!file.endsWith("-result.json")) return;
 
-todayData.passRate = total > 0
-  ? ((passed / total) * 100).toFixed(2) + '%'
-  : (failed > 0 ? '0%' : 'N/A');
+const data = JSON.parse(
+fs.readFileSync(path.join(resultsDir, file))
+);
 
-todayData.stabilityScore = (total - flaky) > 0
-  ? ((passed / (total - flaky)) * 100).toFixed(2) + '%'
-  : (failed > 0 ? '0%' : 'N/A');
-  
-todayData.timestamp = new Date().toISOString();
+total++;
 
-// Load previous history
+if (data.status === "passed") passed++;
+if (data.status === "failed") failed++;
+if (data.flaky === true) flaky++;
+
+results.push({
+name: data.parameters?.map(p => p.value).join(":")+":"+data.name,
+status: data.status,
+start: data.start || 0,
+stop: data.stop || 0,
+error: data.statusDetails?.message || ""
+});
+
+});
+
+const entry = {
+
+timestamp: new Date().toISOString(),
+total,
+passed,
+failed,
+flaky,
+results
+
+};
+
 let history = [];
+
 if (fs.existsSync(historyFile)) {
-  history = JSON.parse(fs.readFileSync(historyFile, 'utf8'));
+
+history = JSON.parse(fs.readFileSync(historyFile));
+
 }
 
-// Append new run and sort
-history.push(todayData);
-history.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+history.push(entry);
 
-// Save persistent history
 fs.writeFileSync(historyFile, JSON.stringify(history, null, 2));
 // Copy to dashboard for GitHub Pages
 fs.writeFileSync(dashboardHistory, JSON.stringify(history, null, 2));
 
-console.log('✅ History updated with flaky tests and stability score');
+console.log('✅ History updated with latest test results');

@@ -1,475 +1,835 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Automation Analytics Dashboard</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script src="https://unpkg.com/html-to-image@1.11.11/dist/html-to-image.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <style>
-    body {
-      font-family: 'Roboto', sans-serif;
-      margin: 0;
-      padding: 20px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: #333;
-      min-height: 100vh;
-      transition: background 0.3s;
-    }
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-      overflow: visible !important;
-      animation: fadeIn 0.5s ease-in;
 
-    }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    header {
-      background: #1a73e8;
-      color: white;
-      padding: 20px 20px 40px; /* default height */
-      text-align: center;
-      position: relative;
-      z-index: 1;
-      transition: padding-bottom 0.2s ease;
-    }
-    header.header-expanded {
-      padding-bottom: 80px;
-    }
-    header .refresh-btn {
-      position: absolute;
-      top: 10px;
-      right: 20px;
-      background: rgba(255,255,255,0.2);
-      border: none;
-      color: white;
-      padding: 10px;
-      border-radius: 50%;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-    header .refresh-btn:hover { background: rgba(255,255,255,0.4); }
-    header .download-btns {
-      position: absolute;
-      top: 12px;
-      left: 20px;
-      display: flex;
-      gap: 10px;
-      align-items: center;
-    }
-    header .download-btns button {
-      background: rgba(255,255,255,0.2);
-      border: none;
-      color: white;
-      padding: 8px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-    header .download-btns button:hover { background: rgba(255,255,255,0.4); }
-    .filter-group {
-      position: absolute;
-      top: 10px;
-      left: 120px;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 2px;
-      padding: 6px 10px 8px;
-      border-radius: 8px;
-      background: transparent; /* transparent container over header */
-      box-shadow: none;
-    }
-    .filter-group label {
-      color: #e3f2fd; /* light text for blue header */
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: .8px;
-    }
-    .filter-select {
-      appearance: none;
-      -webkit-appearance: none;
-      -moz-appearance: none;
-      min-width: 150px;
-      padding: 4px 28px 4px 0;
-      border: none;
-      border-bottom: 1px solid rgba(255,255,255,0.7);
-      font-size: 13px;
-      background: transparent;
-      color: #ffffff;
-      font-weight: 400;
-      cursor: pointer;
-      outline: none;
-      position: relative;
-    }
-    .filter-select:focus {
-      border-bottom: 2px solid #ffffff;
-    }
-    .filter-group::after {
-      content: '';
-      position: absolute;
-      right: 14px;
-      bottom: 10px;
-      border: 5px solid transparent;
-      border-top-color: #ffffff;
-      pointer-events: none;
-    }
-    .filter-select option {
-      background: #ffffff;
-      color: #202124;
-    }
-    h2 { margin: 0; font-weight: 500; }
-    .loading { text-align: center; padding: 50px; font-size: 18px; color: #666; }
-    .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #1a73e8; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 20px; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    .summary {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 20px;
-      padding: 20px;
-      background: #f8f9fa;
-    }
-    .stat-card {
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      text-align: center;
-      transition: transform 0.2s, box-shadow 0.2s;
-      cursor: pointer;
-    }
-    .stat-card:hover { transform: translateY(-5px); box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
-    .stat-card h3 { margin: 0 0 10px; font-size: 14px; color: #666; text-transform: uppercase; }
-    .stat-card p { margin: 0; font-size: 24px; font-weight: 500; color: #1a73e8; }
-    .charts {
-      padding: 20px;
-      display: grid;
-      gap: 20px;
-      grid-template-columns: repeat(2, 1fr);
-    }
-    .chart-container { margin-bottom: 40px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-    canvas { max-width: 100%; height: 400px; }
-    .flaky-section { padding: 20px; background: #f8f9fa; }
-    .flaky-list { list-style: none; padding: 0; }
-    .flaky-list li {
-      background: white;
-      margin: 5px 0;
-      padding: 10px;
-      border-radius: 4px;
-      box-shadow: 0 1px 5px rgba(0,0,0,0.1);
-      transition: background 0.2s;
-    }
-    .flaky-list li:hover { background: #f0f0f0; }
-    .no-flaky { color: #666; font-style: italic; }
-    footer { text-align: center; padding: 10px; background: #1a73e8; color: white; }
-    .charts {
-      padding: 20px;
-      display: grid;
-      gap: 20px;
-      grid-template-columns: repeat(2, 1fr);
-    }
-    .chart-container.trend {
-      grid-column: 1 / -1; /* span both columns */
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Playwright QA Analytics</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dom-to-image-more@2.9.0/dist/dom-to-image-more.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<style>
+
+*{
+box-sizing:border-box;
+margin:0;
+padding:0;
+}
+
+body{
+font-family:Segoe UI,system-ui;
+background:linear-gradient(135deg,#eef2ff,#f0f9ff,#ecfeff);
+color:#1f2937;
+min-height:100vh;
+animation:fadeIn .6s ease;
+}
+
+@keyframes fadeIn{
+from{opacity:0; transform:translateY(10px)}
+to{opacity:1; transform:translateY(0)}
+}
+
+/* HEADER */
+
+.header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:16px 24px;
+
+backdrop-filter:blur(12px);
+background:linear-gradient(90deg,#4f46e5,#3b82f6);
+color:white;
+border-bottom:none;
+
+position:sticky;
+top:0;
+z-index:100;
+}
+
+.title{
+font-size:20px;
+font-weight:600;
+}
+
+.controls{
+display:flex;
+gap:12px;
+}
+
+/* DROPDOWN */
+
+.dropdown{
+position:relative;
+}
+
+.dropdown-btn{
+padding:8px 14px;
+
+border-radius:10px;
+
+border:1px solid #c7d2fe;
+
+background:#eef2ff;
+color:#1e3a8a;
+
+backdrop-filter:blur(10px);
+
+cursor:pointer;
+font-size:13px;
+
+transition:all .2s;
+display:flex;
+align-items:center;
+gap:6px;
+}
+
+.dropdown-btn:hover{
+background:#e0e7ff;
+}
+
+.dropdown-menu{
+display:none;
+position:absolute;
+top:42px;
+right:0;
+background:white;
+border-radius:10px;
+box-shadow:0 10px 25px rgba(0,0,0,.1);
+overflow:hidden;
+min-width:180px;
+}
+
+.dropdown.open .dropdown-menu{
+display:block;
+}
+
+.dropdown-menu button{
+width:100%;
+border:none;
+background:#e0e7ff;
+padding:10px 14px;
+cursor:pointer;
+text-align:left;
+cursor:pointer;
+}
+
+.dropdown-menu button:hover{
+background:#f4f6fb;
+}
+
+/* KPI */
+
+.kpis{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+gap:20px;
+padding:24px;
+margin-top:10px;
+}
+
+.kpi{
+position:relative;
+overflow:hidden;
+
+background:rgba(255,255,255,0.75);
+backdrop-filter:blur(10px);
+
+padding:20px;
+border-radius:14px;
+
+box-shadow:0 8px 25px rgba(0,0,0,.08);
+}
+
+.kpi:hover{
+box-shadow:
+0 10px 25px rgba(79,70,229,.25),
+0 0 10px rgba(99,102,241,.15);
+}
+
+.kpi::after{
+content:"";
+position:absolute;
+top:-50%;
+left:-50%;
+width:200%;
+height:200%;
+
+background:radial-gradient(
+circle,
+rgba(99,102,241,0.15),
+transparent 70%
+);
+
+animation:glowMove 6s linear infinite;
+}
+
+@keyframes glowMove{
+
+0%{transform:translateX(-30%) translateY(-30%);}
+50%{transform:translateX(30%) translateY(30%);}
+100%{transform:translateX(-30%) translateY(-30%);}
+
+}
+
+.kpi-title{
+font-size:13px;
+color:#777;
+}
+
+.kpi-value{
+font-size:28px;
+font-weight:600;
+margin-top:6px;
+}
+
+/* CHARTS GRID */
+
+.charts{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(340px,1fr));
+gap:20px;
+padding:24px;
+margin-top:10px;
+}
+
+/* CHART CARD */
+
+.chart-card{
+
+background:linear-gradient(
+180deg,
+rgba(255,255,255,0.85),
+rgba(255,255,255,0.6)
+);
+
+backdrop-filter:blur(12px);
+border-radius:14px;
+
+box-shadow:0 10px 30px rgba(0,0,0,.08);
+
+padding:18px;
+
+display:flex;
+flex-direction:column;
+height:320px;
+
+transition:all .2s;
+}
+
+.chart-card:hover{
+transform:translateY(-4px);
+box-shadow:0 16px 40px rgba(0,0,0,.12);
+}
+
+.chart-title{
+font-weight:600;
+margin-bottom:12px;
+color:#374151;
+letter-spacing:.4px;
+font-size:14px;
+display:flex;
+align-items:center;
+gap:6px;
+}
+
+/* CHART WRAPPER */
+
+.chart-wrapper{
+position:relative;
+flex:1;
+width:100%;
+}
+
+.chart-wrapper canvas{
+display:block;
+width:100% !important;
+height:100% !important;
+}
+
+/* TABLE */
+
+.table-container{
+padding:24px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+
+background:rgba(255,255,255,0.7);
+backdrop-filter:blur(10px);
+
+border-radius:12px;
+
+overflow:hidden;
+
+box-shadow:0 8px 25px rgba(0,0,0,.08);
+}
+
+tbody tr:hover{
+background:#f8fafc;
+}
+
+tbody tr:nth-child(even){
+background:#fafafa;
+}
+
+th,td{
+padding:10px;
+border-bottom:1px solid #eee;
+font-size:13px;
+}
+
+th{
+background:#e0e7ff;
+color:#1e3a8a;
+}
+
+#historyLabel{
+white-space:nowrap;
+}
+
+canvas{
+background:transparent;
+}
+
+.chart-card{
+position:relative;
+overflow:hidden;
+}
+
+.chart-card::before{
+content:"";
+position:absolute;
+top:0;
+left:0;
+width:100%;
+height:4px;
+
+background:linear-gradient(
+90deg,
+#6366f1,
+#22c55e,
+#f59e0b,
+#ef4444
+);
+
+background-size:300% 300%;
+
+animation:gradientMove 6s ease infinite;
+}
+
+@keyframes gradientMove{
+
+0%{background-position:0% 50%;}
+50%{background-position:100% 50%;}
+100%{background-position:0% 50%;}
+
+}
+
+.chart-card,
+.kpi{
+transition:
+transform .25s ease,
+box-shadow .25s ease;
+}
+
+.chart-card:hover,
+.kpi:hover{
+
+transform:translateY(-6px) scale(1.01);
+
+box-shadow:
+0 18px 40px rgba(0,0,0,.12);
+
+}
+
+@media(max-width:768px){
+
+.header{
+flex-direction:column;
+gap:10px;
+align-items:flex-start;
+}
+
+.controls{
+width:100%;
+justify-content:space-between;
+}
+
+.charts{
+grid-template-columns:1fr;
+}
+
+}
+
+#statusChart {
+  height: 200px !important; /* smaller than the card height */
+  max-width: 100%;
+}
+
+</style>
+
 </head>
+
 <body>
-  <div class="container">
-    <header>
-      <div class="download-btns">
-        <button onclick="downloadImage()"><i class="fas fa-image"></i> Image</button>
-      </div>
-      <div class="filter-group">
-        <label for="dateFilter">History Range</label>
-        <select
-          id="dateFilter"
-          class="filter-select"
-          onchange="onFilterChange(this.value)"
-          onmousedown="toggleHeaderExpand(true)"
-          onblur="toggleHeaderExpand(false)"
-        >
-          <option value="all">All</option>
-          <option value="today">Today</option>
-          <option value="lastDay">Last 24h</option>
-          <option value="weekly">Last 7 days</option>
-          <option value="monthly">Last 30 days</option>
-        </select>
-      </div>
-      <button class="refresh-btn" onclick="location.reload()"><i class="fas fa-sync-alt"></i></button>
-      <h2><i class="fas fa-rocket"></i> Automation Analytics Dashboard</h2>
-      <p>Track your test suite performance and stability</p>
-    </header>
 
-    <div id="loading" class="loading">
-      <div class="spinner"></div>
-      Loading dashboard data...
-    </div>
+<div class="header">
 
-    <div id="content" style="display: none;">
-      <section class="summary" id="summary"></section>
+<div class="title">🚀 Playwright QA Analytics</div>
 
-      <section class="charts">
-        <div class="chart-container trend">
-          <h3><i class="fas fa-chart-bar"></i> Test Trends</h3>
-          <canvas id="trendChart"></canvas>
-        </div>
+<div class="controls">
 
-        <div class="chart-container">
-          <h3><i class="fas fa-chart-line"></i> Pass Rate / Stability</h3>
-          <canvas id="stabilityChart"></canvas>
-        </div>
+<!-- HISTORY RANGE -->
 
-        <div class="chart-container">
-          <h3><i class="fas fa-chart-bar"></i> Flaky Tests Trends</h3>
-          <canvas id="flakyChart"></canvas>
-        </div>
-      </section>
+<div class="dropdown" id="historyDropdown">
 
-      <section class="flaky-section">
-        <h3><i class="fas fa-exclamation-triangle"></i> Flaky Tests (Latest Run)</h3>
-        <ul id="flakyList"></ul>
-      </section>
-    </div>
+<button class="dropdown-btn">
+History Range: <span id="historyLabel">All</span> ▾
+</button>
 
-    <footer>
-      <p><i class="fas fa-code"></i> Generated by Playwright Framework</p>
-    </footer>
-  </div>
+<div class="dropdown-menu">
 
-  <script>
-    let fullHistoryData = [];
-    let trendChartInstance, stabilityChartInstance, flakyChartInstance;
+<button data-range="all">All</button>
+<button data-range="today">Today</button>
+<button data-range="7">Last 7 Days</button>
+<button data-range="30">Last 30 Days</button>
 
-    function toggleHeaderExpand(expand) {
-      const headerEl = document.querySelector('header');
-      if (!headerEl) return;
-      if (expand) {
-        headerEl.classList.add('header-expanded');
-      } else {
-        headerEl.classList.remove('header-expanded');
-      }
-    }
+</div>
 
-    // header expand/collapse is now controlled directly from the select
-    // via onmousedown (expand) and onblur/onchange (collapse)
+</div>
 
-    async function fetchHistory() {
-      const response = await fetch('./history.json');
-      if (!response.ok) throw new Error('Cannot fetch history.json');
-      return response.json();
-    }
+<!-- ACTIONS -->
 
-    function onFilterChange(range) {
-      applyFilter(range);
-      // Collapse header back to its default height after a selection
-      toggleHeaderExpand(false);
-    }
+<div class="dropdown">
 
-    function applyFilter(range) {
-      if (!fullHistoryData || fullHistoryData.length === 0) {
-        renderDashboard([]);
+<button class="dropdown-btn">Actions ▾</button>
+
+<div class="dropdown-menu">
+
+<button id="downloadPDF">Download PDF</button>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- KPI -->
+
+<div class="kpis">
+
+<div class="kpi">
+<div class="kpi-title">Total Tests (Executed)</div>
+<div class="kpi-value" id="totalTests">0</div>
+</div>
+
+<div class="kpi">
+<div class="kpi-title">Passed</div>
+<div class="kpi-value" id="passedTests">0</div>
+</div>
+
+<div class="kpi">
+<div class="kpi-title">Failed</div>
+<div class="kpi-value" id="failedTests">0</div>
+</div>
+
+<div class="kpi">
+<div class="kpi-title">Flaky</div>
+<div class="kpi-value" id="flakyTests">0</div>
+</div>
+
+</div>
+
+<!-- CHARTS -->
+
+<div class="charts">
+
+<div class="chart-card">
+<div class="chart-title">📈 Execution Trend</div>
+<div class="chart-wrapper">
+<canvas id="trendChart"></canvas>
+</div>
+</div>
+
+<div class="chart-card">
+<div class="chart-title">📊 Pass Rate</div>
+<div class="chart-wrapper">
+<canvas id="passChart"></canvas>
+</div>
+</div>
+
+<div class="chart-card">
+<div class="chart-title">🥧 Status Distribution</div>
+<div class="chart-wrapper">
+<canvas id="statusChart"></canvas>
+</div>
+</div>
+
+<div class="chart-card">
+<div class="chart-title">⚠️ Flaky Trend</div>
+<div class="chart-wrapper">
+<canvas id="flakyChart"></canvas>
+</div>
+</div>
+
+<div class="chart-card">
+<div class="chart-title">📉 Pass Rate vs Stability</div>
+<div class="chart-wrapper">
+<canvas id="qualityChart"></canvas>
+</div>
+</div>
+</div>
+
+<!-- TABLE -->
+
+<div class="table-container">
+
+<h3>Slowest Tests</h3>
+
+<table>
+
+<thead>
+<tr>
+<th>Test</th>
+<th>Status</th>
+<th>Date</th>
+<th>Duration</th>
+</tr>
+</thead>
+
+<tbody id="slowTests"></tbody>
+
+</table>
+
+</div>
+<div style="text-align:center;padding:20px;color:#6b7280;font-size:12px">
+QA Analytics Dashboard • Playwright Automation
+</div>
+<script>
+
+/* DROPDOWN */
+
+document.querySelectorAll(".dropdown-btn").forEach(btn=>{
+
+btn.onclick=(e)=>{
+
+e.stopPropagation()
+
+const parent=btn.parentElement
+
+document.querySelectorAll(".dropdown").forEach(d=>{
+if(d!==parent)d.classList.remove("open")
+})
+
+parent.classList.toggle("open")
+
+}
+
+})
+
+document.addEventListener("click",()=>{
+document.querySelectorAll(".dropdown").forEach(d=>d.classList.remove("open"))
+})
+
+function closeAllDropdowns(){
+document.querySelectorAll(".dropdown").forEach(d=>d.classList.remove("open"))
+}
+
+/* CHARTS */
+
+let trendChart=new Chart(document.getElementById("trendChart"),{
+type:"line",
+data:{labels:[],datasets:[{label:"Tests",data:[],borderColor:"#4f6df5"}]},
+options:{responsive:true,maintainAspectRatio:false}
+})
+
+let passChart=new Chart(document.getElementById("passChart"),{
+type:"line",
+data:{labels:[],datasets:[{label:"Pass %",data:[],borderColor:"#2ecc71"}]},
+options:{responsive:true,maintainAspectRatio:false}
+})
+
+let statusChart=new Chart(document.getElementById("statusChart"),{
+type:"doughnut",
+data:{
+labels:["Passed","Failed","Flaky"],
+datasets:[{
+data:[0,0,0],
+backgroundColor:["#2ecc71","#e74c3c","#f1c40f"],
+radius:"100%",
+hoverOffset:4
+}]
+},
+options:{
+responsive:true,
+maintainAspectRatio:false,
+cutout:"40%",
+plugins:{
+legend:{
+position:"top",
+labels:{
+boxWidth:12,
+padding:20
+}
+}
+}
+}
+})
+
+let flakyChart=new Chart(document.getElementById("flakyChart"),{
+type:"line",
+data:{labels:[],datasets:[{label:"Flaky",data:[],borderColor:"#f39c12"}]},
+options:{responsive:true,maintainAspectRatio:false}
+})
+
+let qualityChart=new Chart(document.getElementById("qualityChart"),{
+type:"line",
+data:{
+labels:[],
+datasets:[
+{
+label:"Pass Rate %",
+data:[],
+borderColor:"#27ae60",
+backgroundColor:"rgba(39,174,96,0.2)",
+tension:0.3
+},
+{
+label:"Stability %",
+data:[],
+borderColor:"#8e44ad",
+backgroundColor:"rgba(142,68,173,0.2)",
+tension:0.3
+}
+]
+},
+options:{
+responsive:true,
+maintainAspectRatio:false,
+plugins:{
+legend:{position:"top"}
+}
+}
+})
+
+let historyData=[]
+
+async function loadDashboard(){
+
+const res=await fetch("./history.json")
+historyData=await res.json()
+
+updateDashboard(historyData)
+
+}
+
+function formatDurationWithLabels(start, stop) {
+    let duration_ms = stop - start;
+
+    let hours = Math.floor(duration_ms / (1000 * 60 * 60));
+    let minutes = Math.floor((duration_ms % (1000 * 60 * 60)) / (1000 * 60));
+    let seconds = Math.floor((duration_ms % (1000 * 60)) / 1000);
+    let milliseconds = duration_ms % 1000;
+
+    return `${hours} hr ${minutes} min ${seconds} sec ${milliseconds} ms`;
+}
+
+// Populate Slowest Tests Table
+function populateSlowTests(data) {
+    const tbody = document.getElementById("slowTests");
+    tbody.innerHTML = ""; // Clear previous rows
+
+    // Collect all results from all entries
+    let allResults = [];
+    historyData.forEach(entry => {
+        if (entry.results && entry.results.length > 0) {
+            allResults = allResults.concat(entry.results);
+        }
+    });
+
+    if (allResults.length === 0) {
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.colSpan = 3;
+        td.innerText = "No slow tests available";
+        td.style.textAlign = "center";
+        tr.appendChild(td);
+        tbody.appendChild(tr);
         return;
-      }
-
-      const now = new Date();
-      let filtered = fullHistoryData;
-
-      if (range && range !== 'all') {
-        filtered = fullHistoryData.filter(r => {
-          const ts = new Date(r.timestamp);
-          const diffMs = now - ts;
-          const diffDays = diffMs / (1000 * 60 * 60 * 24);
-
-          switch (range) {
-            case 'today':
-              return ts.toDateString() === now.toDateString();
-            case 'lastDay':
-              return diffMs <= 24 * 60 * 60 * 1000;
-            case 'weekly':
-              return diffDays <= 7;
-            case 'monthly':
-              return diffDays <= 30;
-            default:
-              return true;
-          }
-        });
-      }
-
-      renderDashboard(filtered);
     }
+    // Sort data by duration descending (assuming each item has duration in ms)
+    allResults.sort((a, b) => (b.stop-b.start) - (a.stop-a.start));
 
-    function renderDashboard(data) {
-      const summary = document.getElementById('summary');
-      const flakyList = document.getElementById('flakyList');
-      const trendCanvas = document.getElementById('trendChart');
-      const stabilityCanvas = document.getElementById('stabilityChart');
-      const flakyCanvas = document.getElementById('flakyChart');
-      const chartsSection = document.querySelector('.charts');
-      const flakySection = document.querySelector('.flaky-section');
+    allResults.forEach(test => {
+        const tr = document.createElement("tr");
 
-      // If no data, clear sections and show default message in summary
-      if (!data || data.length === 0) {
-        summary.innerHTML = `<p style="text-align: center; padding: 50px; color: #666;">
-          <i class="fas fa-info-circle"></i> No data available. Run tests to generate history.
-        </p>`;
-        flakyList.innerHTML = '';
-        
-        // Destroy existing charts if any
-        if (trendChartInstance) { trendChartInstance.destroy(); trendChartInstance = null; }
-        if (stabilityChartInstance) { stabilityChartInstance.destroy(); stabilityChartInstance = null; }
-        if (flakyChartInstance) { flakyChartInstance.destroy(); flakyChartInstance = null; }
+        const tdName = document.createElement("td");
+        tdName.innerText = test.name || "-";
 
-        if (chartsSection) chartsSection.style.display = 'none';
-        if (flakySection) flakySection.style.display = 'none';
+        const tdStatus = document.createElement("td");
+        tdStatus.innerText = test.status || "-";
 
+        const tdDate = document.createElement("td");
+        const dateObject = new Date(test.start);
+        tdDate.innerText = dateObject.toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric', 
+    hour: '2-digit', 
+    minute: '2-digit', 
+    second: '2-digit',
+}) + " " + dateObject.toString().match(/\(([^)]+)\)/)[1] || "-";
+
+        const tdDuration = document.createElement("td");
+        // Format duration in ms to hh:mm:ss.ms
+        tdDuration.innerText = formatDurationWithLabels(test.start, test.stop) || "-";
+
+        tr.appendChild(tdName);
+        tr.appendChild(tdStatus);
+        tr.appendChild(tdDate);
+        tr.appendChild(tdDuration);
+
+        tbody.appendChild(tr);
+    });
+}
+
+/* UPDATE DASHBOARD */
+
+function updateKPIs(data) {
+    if (!data || data.length === 0) {
+        totalTests.innerText = 0;
+        passedTests.innerText = 0;
+        failedTests.innerText = 0;
+        flakyTests.innerText = 0;
         return;
-      }
-
-      const labels = data.map(r => new Date(r.timestamp).toLocaleDateString());
-      const passRate = data.map(r => parseFloat(r.passRate));
-      const failedTests = data.map(r => r.failed);
-      const stabilityScore = data.map(r => parseFloat(r.stabilityScore));
-      const totalTests = data.map(r => r.total);
-      const flaky = data.map(d => d.flaky);
-
-      const lastRun = data[data.length - 1];
-      summary.innerHTML = `
-        <div class="stat-card"><h3><i class="fas fa-list"></i> Total Tests</h3><p>${lastRun.total}</p></div>
-        <div class="stat-card"><h3><i class="fas fa-check-circle"></i> Passed</h3><p>${lastRun.passed}</p></div>
-        <div class="stat-card"><h3><i class="fas fa-times-circle"></i> Failed</h3><p>${lastRun.failed}</p></div>
-        <div class="stat-card"><h3><i class="fas fa-percentage"></i> Pass Rate</h3><p>${lastRun.passRate}</p></div>
-        <div class="stat-card"><h3><i class="fas fa-random"></i> Flaky Tests</h3><p>${lastRun.flaky}</p></div>
-        <div class="stat-card"><h3><i class="fas fa-shield-alt"></i> Stability Score</h3><p>${lastRun.stabilityScore}</p></div>
-      `;
-
-      flakyList.innerHTML = '';
-      if (lastRun.flakyTests.length > 0) {
-        lastRun.flakyTests.forEach(t => {
-          const li = document.createElement('li');
-          li.innerHTML = `<i class="fas fa-bug"></i> ${t}`;
-          flakyList.appendChild(li);
-        });
-      } else {
-        flakyList.innerHTML = '<li class="no-flaky"><i class="fas fa-check"></i> No flaky tests detected</li>';
-      }
-
-      // Destroy existing charts before re-creating to avoid overlay
-      if (trendChartInstance) trendChartInstance.destroy();
-      if (stabilityChartInstance) stabilityChartInstance.destroy();
-      if (flakyChartInstance) flakyChartInstance.destroy();
-
-      if (chartsSection) chartsSection.style.display = 'grid';
-      if (flakySection) flakySection.style.display = 'block';
-
-      trendChartInstance = new Chart(document.getElementById('trendChart').getContext('2d'), {
-        type: 'bar',
-        data: {
-          labels,
-          datasets: [
-            { label: 'Passed', data: data.map(r => r.passed), backgroundColor: '#28a745', stack: 'tests' },
-            { label: 'Failed', data: failedTests, backgroundColor: '#dc3545', stack: 'tests' }
-          ]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { position: 'top' },
-            title: { display: true, text: 'Test Trends' }
-          },
-          scales: {
-            x: { stacked: true },
-            y: { stacked: true, beginAtZero: true }
-          }
-        }
-      });
-      stabilityChartInstance = new Chart(document.getElementById('stabilityChart').getContext('2d'), {
-        type: 'line',
-        data: {
-          labels,
-          datasets: [
-            { label: 'Pass Rate (%)', data: passRate, borderColor: '#28a745', backgroundColor: '#28a745', fill: false, tension: 0.3, pointRadius: 5 },
-            { label: 'Stability Score (%)', data: stabilityScore, borderColor: '#ffc107', backgroundColor: '#ffc107', fill: false, tension: 0.3, pointRadius: 5 }
-          ]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { position: 'top' },
-            title: { display: true, text: 'Pass Rate & Stability Trends' }
-          },
-          scales: { y: { beginAtZero: true } }
-        }
-      });
-
-      flakyChartInstance = new Chart(document.getElementById('flakyChart').getContext('2d'), {
-        type: 'bar',
-        data: {
-          labels,
-          datasets: [
-            { label: 'Total Tests', data: totalTests, backgroundColor: 'blue', stack: 'tests' },
-            { label: 'Flaky Tests', data: flaky, backgroundColor: 'yellow', stack: 'tests' }
-          ]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { position: 'top' },
-            title: { display: true, text: 'Flaky Tests Trends' }
-          },
-          scales: {
-            x: { stacked: true },
-            y: { stacked: true, beginAtZero: true }
-          }
-        }
-      });
     }
 
-    async function downloadImage() {
-      // Capture the full dashboard container, including content below the viewport,
-      // using html-to-image (better rendering than dom-to-image)
-      const node = document.querySelector('body');
+    // Aggregate totals from all filtered entries
+    const total = data.reduce((sum, entry) => sum + (entry.total || 0), 0);
+    const passed = data.reduce((sum, entry) => sum + (entry.passed || 0), 0);
+    const failed = data.reduce((sum, entry) => sum + (entry.failed || 0), 0);
+    const flaky = data.reduce((sum, entry) => sum + (entry.flaky || 0), 0);
 
-      const width = node.scrollWidth;
-      const height = node.scrollHeight;
+    totalTests.innerText = total;
+    passedTests.innerText = passed;
+    failedTests.innerText = failed;
+    flakyTests.innerText = flaky;
+}
 
-      const dataUrl = await htmlToImage.toPng(node, {
-        bgcolor: '#ffffff',
-        quality: 0.95,
-        width,
-        height,
-        style: {
-          width: width + 'px',
-          height: height + 'px',
-          transform: 'scale(1)',
-          transformOrigin: 'top left'
+function updateDashboard(data){
+
+updateKPIs(data);
+
+const passedTotal = data.reduce((sum, entry) => sum + (entry.passed || 0), 0);
+const total = data.reduce((sum, entry) => sum + (entry.total || 0), 0);
+const failedTotal = data.reduce((sum, entry) => sum + (entry.failed || 0), 0);
+const flakyTotal = data.reduce((sum, entry) => sum + (entry.flaky || 0), 0);
+
+trendChart.data.labels=data.map(d=>new Date(d.timestamp).toLocaleDateString())
+trendChart.data.datasets[0].data=data.map(d=>d.total)
+trendChart.update()
+
+passChart.data.labels=data.map(d=>new Date(d.timestamp).toLocaleDateString())
+passChart.data.datasets[0].data=data.map(d=>Math.round(d.passed/d.total*100))
+passChart.update()
+
+statusChart.data.datasets[0].data = [passedTotal, failedTotal, flakyTotal];
+statusChart.update();
+
+flakyChart.data.labels=data.map(d=>new Date(d.timestamp).toLocaleDateString())
+flakyChart.data.datasets[0].data=data.map(d=>d.flaky)
+flakyChart.update()
+
+qualityChart.data.labels=data.map(d=>new Date(d.timestamp).toLocaleDateString())
+
+qualityChart.data.datasets[0].data=data.map(d=>
+Math.round((d.passed/d.total)*100)
+)
+
+qualityChart.data.datasets[1].data=data.map(d=>
+Math.round((d.passed/(d.total-d.flaky))*100)
+)
+
+qualityChart.update()
+
+// Populate Slowest Tests
+if (data.length > 0) {
+  populateSlowTests(data);
+} 
+
+
+}
+
+/* HISTORY FILTER */
+
+document.querySelectorAll("#historyDropdown .dropdown-menu button").forEach(btn=>{
+
+btn.onclick=(e)=>{
+e.stopPropagation();
+const range=btn.dataset.range
+historyLabel.innerText=btn.innerText
+
+let filtered=[...historyData]
+const now=new Date()
+
+if(range==="today"){
+filtered=historyData.filter(r=>new Date(r.timestamp).toDateString()===now.toDateString())
+}
+
+if(range==="7"){
+filtered=historyData.filter(r=>now-new Date(r.timestamp)<7*86400000)
+}
+
+if(range==="30"){
+filtered=historyData.filter(r=>now-new Date(r.timestamp)<30*86400000)
+}
+
+// Update charts and slow tests table with filtered data
+        if (filtered.length > 0) {
+            updateDashboard(filtered);
+            populateSlowTests(filtered); // <-- update slow tests here
+            updateKPIs(filtered);
+        } else {
+            // If no data, clear charts and slow tests
+            updateDashboard([]);
+            populateSlowTests([]);
+            updateKPIs([]);
         }
-      });
 
-      const a = document.createElement('a');
-      a.href = dataUrl;
-      a.download = 'dashboard.png';
-      a.click();
-    }
+closeAllDropdowns()
 
-    fetchHistory()
-      .then(data => {
-        fullHistoryData = data || [];
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('content').style.display = 'block';
-        applyFilter(document.getElementById('dateFilter').value || 'all');
-      })
-      .catch(err => {
-        document.getElementById('loading').innerHTML = '<i class="fas fa-exclamation-circle"></i> Error loading dashboard: ' + err.message;
-        console.error(err);
-      });
-  </script>
+}
+
+})
+
+/* DOWNLOAD */
+
+document.getElementById("downloadPDF").onclick = () => {
+  // Close dropdowns
+  closeAllDropdowns();
+
+  // Select the element to export (full dashboard)
+  const element = document.body; // or a wrapper div if you have one
+
+  const opt = {
+    margin:       10,
+    filename:     'qa-dashboard.pdf',
+    image:        { type: 'jpeg', quality: 1 },
+    html2canvas: { scale: 2, useCORS: true, backgroundColor: null },
+    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+
+  html2pdf().set(opt).from(element).save();
+};
+
+loadDashboard()
+
+</script>
 </body>
 </html>
