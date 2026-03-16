@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Playwright QA Analytics</title>
+
+    <link rel="stylesheet" href="css/dashboard.css" />
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+</head>
+
+<body>
+
+    <div class="header">
+
+        <div class="title">🚀 Playwright QA Analytics</div>
+
+        <div class="controls">
+
+            <div class="dropdown" id="historyDropdown">
+                <button class="dropdown-btn">
+                    History Range: <span id="historyLabel">All</span> ▾
+                </button>
+
+                <div class="dropdown-menu">
+                    <button data-range="all">All</button>
+                    <button data-range="today">Today</button>
+                    <button data-range="7">Last 7 Days</button>
+                    <button data-range="30">Last 30 Days</button>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <button class="dropdown-btn">Actions ▾</button>
+                <div class="dropdown-menu">
+                    <button id="downloadPDF">Export Report</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- KPI -->
+
+    <div class="kpis">
+
+        <div class="kpi">
+            <div class="kpi-title">Total Tests (Executed)</div>
+            <div class="kpi-value" id="totalTests">0</div>
+        </div>
+
+        <div class="kpi">
+            <div class="kpi-title">Passed</div>
+            <div class="kpi-value" id="passedTests">0</div>
+        </div>
+
+        <div class="kpi">
+            <div class="kpi-title">Failed</div>
+            <div class="kpi-value" id="failedTests">0</div>
+        </div>
+
+        <div class="kpi">
+            <div class="kpi-title">Flaky</div>
+            <div class="kpi-value" id="flakyTests">0</div>
+        </div>
+
+    </div>
+
+    <div class="insights-card">
+        <h3>QA Insights</h3>
+        <ul id="qaInsights"></ul>
+    </div>
+
+    <!-- CHARTS -->
+
+    <div class="charts">
+
+        <div class="chart-card">
+            <div class="chart-title">📈 Execution Trend</div>
+            <div class="chart-wrapper">
+                <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-title">📊 Pass Rate</div>
+            <div class="chart-wrapper">
+                <canvas id="passChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-title">🥧 Status Distribution</div>
+            <div class="chart-wrapper">
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-title">⚠️ Flaky Trend</div>
+            <div class="chart-wrapper">
+                <canvas id="flakyChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-title">📉 Pass Rate vs Stability</div>
+            <div class="chart-wrapper">
+                <canvas id="qualityChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-title">📉 Failure Heatmap</div>
+            <div class="chart-wrapper">
+                <canvas id="failureHeatmap"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- TABLE -->
+
+    <div class="table-card">
+
+        <h3>Slowest Tests</h3>
+
+        <input type="text" id="slowTestSearch" placeholder="Search test..." />
+
+        <table id="slowTestsTable">
+
+            <thead>
+                <tr>
+                    <th data-sort="name">Test Name ⬍</th>
+                    <th data-sort="status">Status ⬍</th>
+                    <th data-sort="date">Date ⬍</th>
+                    <th data-sort="duration">Duration ⬍</th>
+                </tr>
+            </thead>
+
+            <tbody id="slowTests"></tbody>
+
+        </table>
+
+        <div class="pagination">
+
+            <button id="prevPage">Previous</button>
+
+            <span id="pageInfo"></span>
+
+            <button id="nextPage">Next</button>
+
+            <button id="exportExcel">Export Excel</button>
+
+            <button id="exportCSV">Export CSV</button>
+
+        </div>
+
+    </div>
+
+    <div style="text-align:center;padding:20px;color:#6b7280;font-size:12px">
+        QA Analytics Dashboard • Playwright Automation
+    </div>
+
+    <script src="js/dashboard.js"></script>
+
+</body>
+
+</html>
