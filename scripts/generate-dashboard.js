@@ -7,11 +7,7 @@ if (!process.env.CI) {
 }
 
 const resultsDir = path.join(__dirname, '..', 'reports/allure-results');
-const historyFile = path.join(__dirname, '..', 'analytics', 'history.json');
-const dashboardHistory = path.join(__dirname, '..', 'dashboard/data', 'history.json');
-
-const dashboardDir = path.dirname(dashboardHistory);
-if (!fs.existsSync(dashboardDir)) fs.mkdirSync(dashboardDir, { recursive: true });
+const historyFile = path.join(__dirname, '..', 'dashboard/data', 'history.json');
 
 // Check if results folder exists
 if (!fs.existsSync(resultsDir)) {
@@ -76,7 +72,5 @@ if (fs.existsSync(historyFile)) {
 history.push(entry);
 
 fs.writeFileSync(historyFile, JSON.stringify(history, null, 2));
-// Copy to dashboard for GitHub Pages
-fs.writeFileSync(dashboardHistory, JSON.stringify(history, null, 2));
 
 console.log('✅ History updated with latest test results');
