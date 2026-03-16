@@ -8,7 +8,7 @@ if (!process.env.CI) {
 
 const resultsDir = path.join(__dirname, '..', 'reports/allure-results');
 const historyFile = path.join(__dirname, '..', 'analytics', 'history.json');
-const dashboardHistory = path.join(__dirname, '..', 'dashboard', 'history.json');
+const dashboardHistory = path.join(__dirname, '..', 'dashboard/data', 'history.json');
 
 const dashboardDir = path.dirname(dashboardHistory);
 if (!fs.existsSync(dashboardDir)) fs.mkdirSync(dashboardDir, { recursive: true });

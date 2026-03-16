@@ -38,7 +38,7 @@
 
 View automation trends here:
 
-[View Dashboard](https://ash-leypereira.github.io/playwright-ts-framework/analytics/dashboard.html)
+[View Dashboard](https://ash-leypereira.github.io/playwright-ts-framework/dashboard/index.html)
 
 ## Framework Architecture
 
