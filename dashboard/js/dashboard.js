@@ -188,7 +188,7 @@ function populateSlowTests(data) {
         name: t.name || "-",
         status: t.status || "-",
         date: new Date(t.start),
-        duration: t.stop - t.start
+        duration: new Date(t.stop) - new Date(t.start)
     }));
 
     applyFilters();
@@ -489,44 +489,48 @@ const PAGE_TOP_MARGIN = 35
 const PAGE_BOTTOM_MARGIN = 15
 function calculateExecutionStats(data) {
 
-    let allTests = []
-
-    data.forEach(entry => {
-        if (entry.results) {
-            allTests = allTests.concat(entry.results)
-        }
-    })
-
-    if (allTests.length === 0) {
-        return null
-    }
-
+    let durations = []
     let totalDuration = 0
     let slowest = null
     let fastest = null
 
-    allTests.forEach(t => {
+    data.forEach(entry => {
 
-        const duration = t.stop - t.start
+        entry.results?.forEach(test => {
 
-        totalDuration += duration
+            if (!test.start || !test.stop) return
 
-        if (!slowest || duration > (slowest.stop - slowest.start)) {
-            slowest = t
-        }
+            const duration =
+                new Date(test.stop).getTime() -
+                new Date(test.start).getTime()
 
-        if (!fastest || duration < (fastest.stop - fastest.start)) {
-            fastest = t
-        }
+            if (duration <= 0) return
+
+            durations.push({
+                name: test.name,
+                duration: duration
+            })
+
+            totalDuration += duration
+
+            if (!slowest || duration > slowest.duration)
+                slowest = { name: test.name, duration }
+
+            if (!fastest || duration < fastest.duration)
+                fastest = { name: test.name, duration }
+
+        })
 
     })
 
-    const avgDuration = Math.round(totalDuration / allTests.length)
+    if (durations.length === 0) return null
+
+    const avgDuration = Math.round(totalDuration / durations.length)
 
     return {
         average: avgDuration,
-        slowest: slowest,
-        fastest: fastest,
+        slowest,
+        fastest,
         total: totalDuration
     }
 
@@ -650,9 +654,9 @@ function generateProfessionalReport() {
             ["Metric", "Value"],
             ["Average Test Duration", formatDuration(stats.average)],
             ["Slowest Test", stats.slowest.name],
-            ["Slowest Duration", formatDuration(stats.slowest.stop - stats.slowest.start)],
+            ["Slowest Duration", formatDuration(stats.slowest.duration)],
             ["Fastest Test", stats.fastest.name],
-            ["Fastest Duration", formatDuration(stats.fastest.stop - stats.fastest.start)],
+            ["Fastest Duration", formatDuration(stats.fastest.duration)],
             ["Total Execution Time", formatDuration(stats.total)]
         ]
 
