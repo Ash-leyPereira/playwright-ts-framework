@@ -548,6 +548,25 @@ function prepareHighResCharts() {
 
 }
 
+function getInsightStyle(text) {
+
+    text = text.toLowerCase()
+
+    if (text.includes("failed") || text.includes("error"))
+        return { icon: "[!]", color: [220,53,69] } // red
+
+    if (text.includes("slow") || text.includes("performance"))
+        return { icon: "[SLOW]", color: [255,140,0] } // orange
+
+    if (text.includes("flaky"))
+        return { icon: "[FLAKY]", color: [180,0,0] } // dark red
+
+    if (text.includes("pass rate") || text.includes("stability"))
+        return { icon: "[INFO]", color: [13,110,253] } // blue
+
+    return { icon: "[OK]", color: [40,167,69] } // green
+}
+
 function generateProfessionalReport() {
 
     closeAllDropdowns();
@@ -594,12 +613,11 @@ function generateProfessionalReport() {
     /* QA SUMMARY + QA INSIGHTS */
     /* ------------------------------------------------ */
 
-    y = addSectionHeader(pdf, "QA Summary & Insights", y);
+    y = addSectionHeader(pdf, "QA Summary", y);
 
     /* QA SUMMARY TABLE */
 
     pdf.setFontSize(12);
-    pdf.text("QA Summary", 10, y);
 
     const summaryRows = [
         ["Total Tests Executed", total],
@@ -611,9 +629,7 @@ function generateProfessionalReport() {
     ];
 
     pdf.autoTable({
-        startY: y + 4,
-        margin: { left: 10 },
-        tableWidth: 90,
+        startY: y,
         head: [["Metric", "Value"]],
         body: summaryRows,
         theme: "grid",
@@ -624,20 +640,7 @@ function generateProfessionalReport() {
     /* Get correct Y after table */
 
     let tableEndY = pdf.lastAutoTable.finalY;
-
-    /* QA INSIGHTS */
-
-    pdf.setFontSize(12);
-    pdf.text("QA Insights", 110, y);
-
-    pdf.setFontSize(10);
-
-    let iy = y + 8;
-
-    insights.forEach(text => {
-        pdf.text("• " + text, 110, iy);
-        iy += 6;
-    });
+    let iy = PAGE_TOP_MARGIN
 
 
     /* Move Y correctly after the bigger of the two columns */
@@ -683,6 +686,41 @@ function generateProfessionalReport() {
     y = addSectionHeader(pdf, "Execution Trend", y)
 
     pdf.addImage(trendMiniImg, "PNG", 10, y, 180, 50)
+
+    addNewPage(pdf);
+
+    y = PAGE_TOP_MARGIN;
+
+    /* QA INSIGHTS */
+
+    y = addSectionHeader(pdf, "QA Insights", y - 4);
+
+    pdf.setFontSize(10)
+
+    iy = y + 10
+
+    insights.forEach(text => {
+
+        const style = getInsightStyle(text)
+
+        pdf.setTextColor(...style.color)
+
+        const insightText = style.icon + " " + text
+
+        const wrappedText = pdf.splitTextToSize(insightText, 180)
+
+        if (iy + wrappedText.length * 6 > 270) {
+            addNewPage(pdf)
+            iy = PAGE_TOP_MARGIN
+        }
+
+        pdf.text(wrappedText, 10, iy)
+
+        iy += wrappedText.length * 6 + 3
+
+    })
+
+    pdf.setTextColor(0, 0, 0) // reset color
 
     addNewPage(pdf);
 
