@@ -4,6 +4,12 @@ on:
   push:
     branches: [ main, master ]
 
+  schedule:
+    # Runs every day at 06:30 UTC, which is 12:00 PM IST
+    - cron: '30 6 * * *'
+  # Allows manual triggering of the workflow from the GitHub UI
+  workflow_dispatch:
+
 jobs:
   test:
     runs-on: ubuntu-latest

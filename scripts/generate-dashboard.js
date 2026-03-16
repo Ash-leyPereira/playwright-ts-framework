@@ -32,36 +32,36 @@ let results = [];
 
 fs.readdirSync(resultsDir).forEach(file => {
 
-if (!file.endsWith("-result.json")) return;
+  if (!file.endsWith("-result.json")) return;
 
-const data = JSON.parse(
-fs.readFileSync(path.join(resultsDir, file))
-);
+  const data = JSON.parse(
+    fs.readFileSync(path.join(resultsDir, file))
+  );
 
-total++;
+  total++;
 
-if (data.status === "passed") passed++;
-if (data.status === "failed") failed++;
-if (data.flaky === true) flaky++;
+  if (data.status === "passed") passed++;
+  if (data.status === "failed") failed++;
+  if (data.flaky === true) flaky++;
 
-results.push({
-name: data.parameters?.map(p => p.value).join(":")+":"+data.name,
-status: data.status,
-start: data.start || 0,
-stop: data.stop || 0,
-error: data.statusDetails?.message || ""
-});
+  results.push({
+    name: data.parameters?.map(p => p.value).join(":") + ":" + data.name,
+    status: data.status,
+    start: data.start || 0,
+    stop: data.stop || 0,
+    error: data.statusDetails?.message || ""
+  });
 
 });
 
 const entry = {
 
-timestamp: new Date().toISOString(),
-total,
-passed,
-failed,
-flaky,
-results
+  timestamp: new Date().toISOString(),
+  total,
+  passed,
+  failed,
+  flaky,
+  results
 
 };
 
@@ -69,7 +69,7 @@ let history = [];
 
 if (fs.existsSync(historyFile)) {
 
-history = JSON.parse(fs.readFileSync(historyFile));
+  history = JSON.parse(fs.readFileSync(historyFile));
 
 }
 
