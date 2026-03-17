@@ -647,7 +647,7 @@ function calculateExecutionStats(data) {
 
 function prepareHighResCharts() {
 
-    Chart.defaults.devicePixelRatio = 3;
+    Chart.defaults.devicePixelRatio = 1.5;
 
     statusChart.resize();
     trendChart.resize();
@@ -913,12 +913,27 @@ function generateProfessionalReport() {
 
     y = addSectionHeader(pdf, "Analytics Charts", y - 4);
 
-    const statusImg = statusChart.toBase64Image();
-    const trendImg = trendChart.toBase64Image();
-    const passImg = passChart.toBase64Image();
-    const flakyImg = flakyChart.toBase64Image();
-    const qualityImg = qualityChart.toBase64Image();
-    const heatmapImg = failureHeatmap.toBase64Image();
+    // Capture as JPEG at 0.82 quality — ~5-8x smaller than PNG with no visible loss
+    function chartToJpeg(chart) {
+        const canvas = chart.canvas
+        const ctx = canvas.getContext("2d")
+        // JPEG doesn't support transparency — paint white behind first
+        const offscreen = document.createElement("canvas")
+        offscreen.width  = canvas.width
+        offscreen.height = canvas.height
+        const octx = offscreen.getContext("2d")
+        octx.fillStyle = "#ffffff"
+        octx.fillRect(0, 0, offscreen.width, offscreen.height)
+        octx.drawImage(canvas, 0, 0)
+        return offscreen.toDataURL("image/jpeg", 0.82)
+    }
+
+    const statusImg  = chartToJpeg(statusChart)
+    const trendImg   = chartToJpeg(trendChart)
+    const passImg    = chartToJpeg(passChart)
+    const flakyImg   = chartToJpeg(flakyChart)
+    const qualityImg = chartToJpeg(qualityChart)
+    const heatmapImg = chartToJpeg(failureHeatmap)
 
     pdf.setFont("helvetica", "bold")
     pdf.setFontSize(10)
@@ -936,8 +951,8 @@ function generateProfessionalReport() {
     pdf.setTextColor(0)
     y += 5;
 
-    pdf.addImage(statusImg, "PNG", 10, y, 90, 60);
-    pdf.addImage(trendImg,  "PNG", 110, y, 90, 60);
+    pdf.addImage(statusImg, "JPEG", 10, y, 90, 60);
+    pdf.addImage(trendImg,  "JPEG", 110, y, 90, 60);
 
     y += 70;
 
@@ -955,8 +970,8 @@ function generateProfessionalReport() {
     pdf.setTextColor(0)
     y += 5;
 
-    pdf.addImage(passImg,  "PNG", 10,  y, 90, 60);
-    pdf.addImage(flakyImg, "PNG", 110, y, 90, 60);
+    pdf.addImage(passImg,  "JPEG", 10,  y, 90, 60);
+    pdf.addImage(flakyImg, "JPEG", 110, y, 90, 60);
 
     addNewPage(pdf);
 
@@ -978,8 +993,8 @@ function generateProfessionalReport() {
     pdf.setTextColor(0)
     y += 5;
 
-    pdf.addImage(qualityImg, "PNG", 10, y, 90, 60);
-    pdf.addImage(heatmapImg, "PNG", 110, y, 90, 60);
+    pdf.addImage(qualityImg, "JPEG", 10, y, 90, 60);
+    pdf.addImage(heatmapImg, "JPEG", 110, y, 90, 60);
 
     const exportFilter = document.getElementById("historyLabel").innerText
         .replace(/\s+/g, "-")
