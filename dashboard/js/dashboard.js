@@ -252,8 +252,13 @@ function populateSlowTests(data) {
 
     if (allResults.length === 0) {
 
+        slowTestsData = [];
+        filteredSlowTests = [];
+        currentPage = 1;
+
         document.getElementById("slowTests").innerHTML =
-            `<tr><td colspan="4" style="text-align:center">No slow tests available</td></tr>`;
+            `<tr><td colspan="4" style="text-align:center;color:#8c91a4;padding:20px">No test results for this time range</td></tr>`;
+        document.getElementById("pageInfo").innerText = "Page 0 of 0";
 
         return;
 
@@ -403,6 +408,16 @@ document.querySelectorAll("#slowTestsTable th").forEach(th => {
 
 });
 
+function buildExportFilename(ext) {
+    const filter = document.getElementById("historyLabel").innerText
+        .replace(/\s+/g, "-")
+        .replace(/[^a-zA-Z0-9\-]/g, "")
+    const now = new Date()
+    const pad = n => String(n).padStart(2, "0")
+    const ts = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`
+    return `Slowest-Tests_${filter}_${ts}.${ext}`
+}
+
 document.getElementById("exportExcel").onclick = () => {
 
     const exportData = filteredSlowTests.map(t => ({
@@ -418,7 +433,7 @@ document.getElementById("exportExcel").onclick = () => {
 
     XLSX.utils.book_append_sheet(wb, ws, "Slow Tests");
 
-    XLSX.writeFile(wb, "slowest-tests.xlsx");
+    XLSX.writeFile(wb, buildExportFilename("xlsx"));
 
 };
 
@@ -428,7 +443,7 @@ document.getElementById("exportCSV").onclick = () => {
 
     filteredSlowTests.forEach(t => {
 
-        csv += `${t.name},${t.status},${t.date.toLocaleString()},${formatDuration(t.duration)}\n`;
+        csv += `"${t.name}","${t.status}","${t.date.toLocaleString()}","${formatDuration(t.duration)}"\n`;
 
     });
 
@@ -440,7 +455,7 @@ document.getElementById("exportCSV").onclick = () => {
 
     a.href = url;
 
-    a.download = "slowest-tests.csv";
+    a.download = buildExportFilename("csv");
 
     a.click();
 
@@ -509,10 +524,9 @@ function updateDashboard(data) {
 
     qualityChart.update()
 
-    if (data.length > 0) {
-        populateSlowTests(data);
-        renderInsights(data);
-    }
+    // Always call both — they handle empty data by rendering clear states
+    populateSlowTests(data);
+    renderInsights(data);
 
 }
 
@@ -632,10 +646,16 @@ function calculateExecutionStats(data) {
 }
 
 function prepareHighResCharts() {
-    // Bump pixel ratio for crisp PDF export — do NOT call resize() here as
-    // it triggers a full chart update() internally which conflicts with
-    // the theme patching we do immediately after.
-    Chart.defaults.devicePixelRatio = 3
+
+    Chart.defaults.devicePixelRatio = 3;
+
+    statusChart.resize();
+    trendChart.resize();
+    passChart.resize();
+    flakyChart.resize();
+    qualityChart.resize();
+    failureHeatmap.resize();
+
 }
 
 // PDF-safe palette — strong enough to be visible on white paper
@@ -678,7 +698,7 @@ function generateProfessionalReport() {
 
     closeAllDropdowns();
     prepareHighResCharts();
-    applyPDFTheme();   // force print-safe colors before any toBase64Image() calls
+    applyPDFTheme();
 
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF("p", "mm", "a4");
@@ -1321,7 +1341,15 @@ function renderInsights(data) {
     list.innerHTML = ""
 
     if (insights.length === 0) {
-        list.innerHTML = `<li style="color:#6b7280;font-style:italic;padding:8px 0">No insights available for this range.</li>`
+        const isDarkEmpty = document.body.classList.contains("dark")
+        list.innerHTML = `<li style="
+            color:${isDarkEmpty ? "#4a5270" : "#8c91a4"};
+            font-style:italic;
+            padding:12px 14px;
+            border-radius:8px;
+            background:${isDarkEmpty ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)"};
+            border:1px dashed ${isDarkEmpty ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"};
+        ">No data available for the selected time range.</li>`
         return
     }
 
