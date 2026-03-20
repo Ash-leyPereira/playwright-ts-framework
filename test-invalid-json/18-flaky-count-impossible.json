@@ -1,0 +1,25 @@
+[
+  {
+    "timestamp": "2026-03-21T10:00:00.000Z",
+    "total": 2,
+    "passed": 0,
+    "failed": 0,
+    "flaky": 1,
+    "results": [
+      {
+        "name": "chromium:Login test 1",
+        "status": "flaky",
+        "start": 1711000000000,
+        "stop": 1711000005000,
+        "error": ""
+      },
+      {
+        "name": "chromium:Login test 2",
+        "status": "flaky",
+        "start": 1711000010000,
+        "stop": 1711000015000,
+        "error": ""
+      }
+    ]
+  }
+]
