@@ -220,14 +220,76 @@ function applyChartTheme() {
     patchChartsWithTheme(t)
 }
 
-let historyData = []
+let activeHistoryData = []
+let importedHistoryData = []
+let currentHistoryRange = "all"
+const archiveCache = {}
+
+async function fetchJsonArray(url) {
+
+    try {
+        const res = await fetch(url)
+        if (!res.ok) return []
+
+        const data = await res.json()
+        return Array.isArray(data) ? data : []
+    } catch (error) {
+        return []
+    }
+
+}
+
+function sortHistoryEntries(data) {
+    return [...data].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+}
+
+function filterEntriesByDays(data, days) {
+    const now = Date.now()
+    return data.filter(entry => now - new Date(entry.timestamp).getTime() < days * 86400000)
+}
+
+async function getHistoryDataForRange(range) {
+
+    let combined = [...activeHistoryData, ...importedHistoryData]
+
+    if (range === "30" || range === "all") {
+        if (!archiveCache.last30) {
+            archiveCache.last30 = await fetchJsonArray("./data/archives/last-30-days.json")
+        }
+        combined = combined.concat(archiveCache.last30)
+    }
+
+    if (range === "all") {
+        if (!archiveCache.all) {
+            archiveCache.all = await fetchJsonArray("./data/archives/all.json")
+        }
+        combined = combined.concat(archiveCache.all)
+    }
+
+    const sorted = sortHistoryEntries(combined)
+
+    if (range === "today") {
+        const today = new Date().toDateString()
+        return sorted.filter(entry => new Date(entry.timestamp).toDateString() === today)
+    }
+
+    if (range === "7") {
+        return filterEntriesByDays(sorted, 7)
+    }
+
+    if (range === "30") {
+        return filterEntriesByDays(sorted, 30)
+    }
+
+    return sorted
+
+}
 
 async function loadDashboard() {
 
-    const res = await fetch("./data/history.json")
-    historyData = await res.json()
+    activeHistoryData = await fetchJsonArray("./data/history.json")
 
-    updateDashboard(historyData)
+    updateDashboard(await getHistoryDataForRange(currentHistoryRange))
 
 }
 
@@ -531,6 +593,114 @@ function buildExportFilename(ext) {
     return `Slowest-Tests_${filter}_${ts}.${ext}`
 }
 
+function buildHistoryExportFilename() {
+    const filter = document.getElementById("historyLabel").innerText
+        .replace(/\s+/g, "-")
+        .replace(/[^a-zA-Z0-9\-]/g, "")
+    const now = new Date()
+    const pad = n => String(n).padStart(2, "0")
+    const ts = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`
+    return `history_${filter}_${ts}.json`
+}
+
+function dedupeHistoryEntries(entries) {
+    const byTimestamp = new Map()
+
+    entries.forEach(entry => {
+        if (!entry || !entry.timestamp) return
+        byTimestamp.set(entry.timestamp, entry)
+    })
+
+    return [...byTimestamp.values()].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+}
+
+function isFiniteNumber(value) {
+    return typeof value === "number" && Number.isFinite(value)
+}
+
+function isValidHistoryResult(result) {
+
+    if (!result || typeof result !== "object") return false
+    if (typeof result.name !== "string" || !result.name.trim()) return false
+    if (!["passed", "failed", "flaky", "skipped", "broken", "unknown"].includes(result.status)) return false
+    if (!isFiniteNumber(result.start) || !isFiniteNumber(result.stop)) return false
+    if (result.start < 0 || result.stop < 0 || result.stop < result.start) return false
+    if (typeof result.error !== "string") return false
+
+    return true
+
+}
+
+function validateHistoryEntry(entry) {
+
+    if (!entry || typeof entry !== "object") {
+        return "Each history item must be an object."
+    }
+
+    if (typeof entry.timestamp !== "string" || Number.isNaN(Date.parse(entry.timestamp))) {
+        return "Each history item must contain a valid timestamp."
+    }
+
+    if (!isFiniteNumber(entry.total) || entry.total < 0) {
+        return "Each history item must contain a valid non-negative total count."
+    }
+
+    if (!isFiniteNumber(entry.passed) || entry.passed < 0) {
+        return "Each history item must contain a valid non-negative passed count."
+    }
+
+    if (!isFiniteNumber(entry.failed) || entry.failed < 0) {
+        return "Each history item must contain a valid non-negative failed count."
+    }
+
+    if (!isFiniteNumber(entry.flaky) || entry.flaky < 0) {
+        return "Each history item must contain a valid non-negative flaky count."
+    }
+
+    if (!Array.isArray(entry.results)) {
+        return "Each history item must contain a results array."
+    }
+
+    if (entry.results.some(result => !isValidHistoryResult(result))) {
+        return "Each result must include valid name, status, start, stop, and error fields."
+    }
+
+    if (entry.passed > entry.total || entry.failed > entry.total || entry.flaky > entry.total) {
+        return "Passed, failed, and flaky counts cannot be greater than total."
+    }
+
+    if ((entry.passed + entry.failed) < entry.flaky) {
+        return "Flaky count cannot exceed the number of executed test outcomes."
+    }
+
+    if (entry.results.length !== entry.total) {
+        return "The total count must match the number of results."
+    }
+
+    return null
+
+}
+
+function validateHistoryImport(records) {
+
+    if (!Array.isArray(records) || records.length === 0) {
+        return "Imported JSON must be a non-empty array in history.json format."
+    }
+
+    for (let i = 0; i < records.length; i++) {
+        const error = validateHistoryEntry(records[i])
+        if (error) {
+            return `Invalid record at index ${i}: ${error}`
+        }
+    }
+
+    return null
+}
+
+async function applyCurrentHistoryRange() {
+    updateDashboard(await getHistoryDataForRange(currentHistoryRange))
+}
+
 let toastTimer;
 let toastHideAnimationTimer;
 
@@ -578,6 +748,57 @@ function showToast(message) {
 }
 
 document.getElementById("toastClose").onclick = hideToast;
+
+document.getElementById("exportJson").onclick = async () => {
+
+    const data = await getHistoryDataForRange(currentHistoryRange)
+
+    if (!Array.isArray(data) || data.length === 0) {
+        showToast("No data available for the selected filter. Please choose a different range before exporting.");
+        return
+    }
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+
+    a.href = url
+    a.download = buildHistoryExportFilename()
+    a.click()
+
+    URL.revokeObjectURL(url)
+
+};
+
+document.getElementById("importJson").onclick = () => {
+    document.getElementById("importJsonInput").click()
+};
+
+document.getElementById("importJsonInput").onchange = async (event) => {
+
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    try {
+        const text = await file.text()
+        const parsed = JSON.parse(text)
+        const records = Array.isArray(parsed) ? parsed : []
+        const validationError = validateHistoryImport(records)
+
+        if (validationError) {
+            showToast(validationError);
+            return
+        }
+
+        importedHistoryData = dedupeHistoryEntries(importedHistoryData.concat(records))
+        await applyCurrentHistoryRange()
+    } catch (error) {
+        showToast("Unable to import JSON. Please check the file format and try again.")
+    } finally {
+        event.target.value = ""
+    }
+
+};
 
 function ensureExportableData() {
 
@@ -713,33 +934,15 @@ function updateDashboard(data) {
 
 document.querySelectorAll("#historyDropdown .dropdown-menu button").forEach(btn => {
 
-    btn.onclick = (e) => {
+    btn.onclick = async (e) => {
 
         e.stopPropagation();
 
         const range = btn.dataset.range;
+        currentHistoryRange = range;
         historyLabel.innerText = btn.innerText;
 
-        let filtered = [...historyData];
-        const now = new Date();
-
-        if (range === "today") {
-            filtered = historyData.filter(r =>
-                new Date(r.timestamp).toDateString() === now.toDateString()
-            );
-        }
-
-        if (range === "7") {
-            filtered = historyData.filter(r =>
-                now - new Date(r.timestamp) < 7 * 86400000
-            );
-        }
-
-        if (range === "30") {
-            filtered = historyData.filter(r =>
-                now - new Date(r.timestamp) < 30 * 86400000
-            );
-        }
+        const filtered = await getHistoryDataForRange(range);
 
         // FIX: route everything through updateDashboard so currentFilteredData
         // stays in sync. Removed the separate populateSlowTests / renderInsights
