@@ -37,9 +37,9 @@ function closeAllDropdowns() {
 function getChartTheme() {
     const dark = document.body.classList.contains("dark")
     return {
-        text:    dark ? "#818cf8" : "#52576b",
-        subtext: dark ? "#4a5270" : "#8c91a4",
-        grid:    dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)"
+        text:    dark ? "#ffffff" : "#52576b",
+        subtext: dark ? "#ffffff" : "#8c91a4",
+        grid:    dark ? "rgba(255,255,255,0.22)" : "rgba(0,0,0,0.05)"
     }
 }
 
@@ -364,6 +364,119 @@ function formatDuration(ms) {
 
 }
 
+function getPdfSlowTestStyle(status) {
+
+    const key = String(status || "").toLowerCase();
+
+    if (key === "failed") {
+        return { accent: [220, 38, 38], bg: [254, 242, 242], badge: [185, 28, 28], label: "FAILED" };
+    }
+
+    if (key === "passed") {
+        return { accent: [22, 163, 74], bg: [240, 253, 244], badge: [21, 128, 61], label: "PASSED" };
+    }
+
+    if (key === "flaky") {
+        return { accent: [217, 119, 6], bg: [255, 247, 237], badge: [180, 83, 9], label: "FLAKY" };
+    }
+
+    return { accent: [79, 70, 229], bg: [238, 242, 255], badge: [67, 56, 202], label: key.toUpperCase() || "UNKNOWN" };
+
+}
+
+function drawSlowTestsGrid(pdf, tests, startY) {
+
+    let y = addSectionHeader(pdf, "Slowest Tests", startY);
+
+    if (!tests.length) {
+        pdf.setFont("helvetica", "italic");
+        pdf.setFontSize(9);
+        pdf.setTextColor(107, 114, 128);
+        pdf.text("No slow test data available for the selected filter.", 10, y + 6);
+        pdf.setFont("helvetica", "normal");
+        pdf.setTextColor(0, 0, 0);
+        return y + 12;
+    }
+
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const leftX = 10;
+    const gutter = 8;
+    const contentWidth = pageWidth - 20;
+    const cardWidth = (contentWidth - gutter) / 2;
+    const bodyWidth = cardWidth - 10;
+    let cursorY = y + 4;
+
+    const buildCard = (test) => {
+        const style = getPdfSlowTestStyle(test.status);
+        const nameLines = pdf.splitTextToSize(test.name || "-", bodyWidth);
+        const dateLines = pdf.splitTextToSize(
+            test.date instanceof Date ? test.date.toLocaleString() : String(test.date || "-"),
+            bodyWidth
+        );
+        const height = 24 + (nameLines.length * 4.4) + (dateLines.length * 4.1);
+
+        return {
+            style,
+            nameLines,
+            dateLines,
+            duration: formatDuration(test.duration),
+            height
+        };
+    };
+
+    const drawCard = (card, x, yPos) => {
+        pdf.setFillColor(...card.style.bg);
+        pdf.setDrawColor(226, 232, 240);
+        pdf.roundedRect(x, yPos, cardWidth, card.height, 3, 3, "FD");
+
+        pdf.setFillColor(...card.style.accent);
+        pdf.rect(x, yPos, 3, card.height, "F");
+
+        pdf.setFillColor(...card.style.badge);
+        pdf.roundedRect(x + 7, yPos + 4, 21, 5.5, 1.5, 1.5, "F");
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(7.5);
+        pdf.setTextColor(255, 255, 255);
+        pdf.text(card.style.label, x + 9.5, yPos + 7.9);
+
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(9.5);
+        pdf.setTextColor(17, 24, 39);
+        pdf.text(card.nameLines, x + 7, yPos + 15);
+
+        const metaY = yPos + 15 + (card.nameLines.length * 4.4) + 2;
+
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(8);
+        pdf.setTextColor(75, 85, 99);
+        pdf.text(`Duration: ${card.duration}`, x + 7, metaY);
+        pdf.text(card.dateLines, x + 7, metaY + 5);
+    };
+
+    for (let i = 0; i < tests.length; i += 2) {
+        const rowCards = tests.slice(i, i + 2).map(buildCard);
+        const rowHeight = Math.max(...rowCards.map(card => card.height));
+        const pageLimit = pdf.internal.pageSize.getHeight() - PAGE_BOTTOM_MARGIN - 4;
+
+        if (cursorY + rowHeight > pageLimit) {
+            addNewPage(pdf);
+            cursorY = PAGE_TOP_MARGIN;
+            cursorY = addSectionHeader(pdf, "Slowest Tests (Continued)", cursorY - 4) + 4;
+        }
+
+        rowCards.forEach((card, idx) => {
+            drawCard(card, leftX + idx * (cardWidth + gutter), cursorY);
+        });
+
+        cursorY += rowHeight + 6;
+    }
+
+    pdf.setFont("helvetica", "normal");
+    pdf.setTextColor(0, 0, 0);
+    return cursorY;
+
+}
+
 document.getElementById("prevPage").onclick = () => {
 
     if (currentPage > 1) {
@@ -418,7 +531,71 @@ function buildExportFilename(ext) {
     return `Slowest-Tests_${filter}_${ts}.${ext}`
 }
 
+let toastTimer;
+let toastHideAnimationTimer;
+
+function hideToast() {
+
+    const toast = document.getElementById("toast");
+    if (!toast) return;
+
+    clearTimeout(toastTimer);
+    clearTimeout(toastHideAnimationTimer);
+
+    if (!toast.classList.contains("show")) {
+        toast.classList.remove("hiding");
+        toast.setAttribute("aria-hidden", "true");
+        return;
+    }
+
+    toast.classList.remove("show");
+    toast.classList.add("hiding");
+    toastHideAnimationTimer = setTimeout(() => {
+        toast.classList.remove("hiding");
+        toast.setAttribute("aria-hidden", "true");
+    }, 1200);
+
+}
+
+function showToast(message) {
+
+    const toast = document.getElementById("toast");
+    const toastMessage = document.getElementById("toastMessage");
+    if (!toast) return;
+
+    if (toastMessage) {
+        toastMessage.innerText = message;
+    }
+
+    clearTimeout(toastHideAnimationTimer);
+    toast.classList.remove("hiding");
+    toast.classList.add("show");
+    toast.setAttribute("aria-hidden", "false");
+
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(hideToast, 10000);
+
+}
+
+document.getElementById("toastClose").onclick = hideToast;
+
+function ensureExportableData() {
+
+    const hasDashboardData = Array.isArray(currentFilteredData) && currentFilteredData.length > 0;
+    const hasSlowTestData = Array.isArray(filteredSlowTests) && filteredSlowTests.length > 0;
+
+    if (hasDashboardData && hasSlowTestData) {
+        return true;
+    }
+
+    showToast("No data available for the selected filter. Please choose a different range before exporting.");
+    return false;
+
+}
+
 document.getElementById("exportExcel").onclick = () => {
+
+    if (!ensureExportableData()) return;
 
     const exportData = filteredSlowTests.map(t => ({
         TestName: t.name,
@@ -438,6 +615,8 @@ document.getElementById("exportExcel").onclick = () => {
 };
 
 document.getElementById("exportCSV").onclick = () => {
+
+    if (!ensureExportableData()) return;
 
     let csv = "Test Name,Status,Date,Duration\n";
 
@@ -695,6 +874,8 @@ function getInsightStyle(text) {
 }
 
 function generateProfessionalReport() {
+
+    if (!ensureExportableData()) return;
 
     closeAllDropdowns();
     prepareHighResCharts();
@@ -995,6 +1176,12 @@ function generateProfessionalReport() {
 
     pdf.addImage(qualityImg, "JPEG", 10, y, 90, 60);
     pdf.addImage(heatmapImg, "JPEG", 110, y, 90, 60);
+
+    addNewPage(pdf);
+
+    y = PAGE_TOP_MARGIN;
+
+    y = drawSlowTestsGrid(pdf, filteredSlowTests, y - 4);
 
     const exportFilter = document.getElementById("historyLabel").innerText
         .replace(/\s+/g, "-")

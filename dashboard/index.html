@@ -136,7 +136,15 @@
 
         <h3>Slowest Tests</h3>
 
-        <input type="text" id="slowTestSearch" placeholder="Search test..." />
+        <div class="slow-tests-toolbar">
+            <input type="text" id="slowTestSearch" placeholder="Search test..." />
+
+            <div class="slow-tests-actions">
+                <button id="exportExcel">Export Excel</button>
+
+                <button id="exportCSV">Export CSV</button>
+            </div>
+        </div>
 
         <table id="slowTestsTable">
 
@@ -161,16 +169,17 @@
 
             <button id="nextPage">Next</button>
 
-            <button id="exportExcel">Export Excel</button>
-
-            <button id="exportCSV">Export CSV</button>
-
         </div>
 
     </div>
 
-    <div style="text-align:center;padding:20px;color:#6b7280;font-size:12px" class="footer-note">
+    <div class="footer-note">
         QA Analytics Dashboard • Playwright Automation
+    </div>
+
+    <div id="toast" class="toast" role="alert" aria-live="polite" aria-hidden="true">
+        <div id="toastMessage" class="toast-message"></div>
+        <button id="toastClose" class="toast-close" type="button" aria-label="Close notification">x</button>
     </div>
 
     <script src="js/dashboard.js"></script>
