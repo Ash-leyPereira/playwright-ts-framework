@@ -30,9 +30,17 @@
             <a id="overviewNavLink" class="sidebar-link" href="index.html">Overview</a>
 
             <button id="sidebarRunsToggle" class="sidebar-group-toggle" type="button">
-                <span>Individual Runs</span>
+                <span id="sidebarRunsLabel">Individual Runs</span>
                 <span id="sidebarRunsCaret" class="sidebar-caret">+</span>
             </button>
+
+            <div id="sidebarRunsSearchWrap" class="sidebar-search-wrap">
+                <div class="sidebar-search-row">
+                    <input id="sidebarRunSearch" class="sidebar-search-input" type="text" placeholder="Search runs by date or test count" aria-label="Search individual runs">
+                    <button id="sidebarRunSearchClear" class="sidebar-search-clear" type="button" aria-label="Clear run search">Clear</button>
+                </div>
+                <div id="sidebarRunsSummary" class="sidebar-search-summary">Search by timestamp or test count.</div>
+            </div>
 
             <div id="sidebarRunsList" class="sidebar-runs-list"></div>
         </nav>
@@ -56,7 +64,7 @@
                 <span></span>
                 <span></span>
             </button>
-            <div class="title">
+            <a class="title" href="index.html" title="Go to overview dashboard">
                 <span class="title-mark" aria-hidden="true">
                     <svg viewBox="0 0 28 28" role="img" focusable="false">
                         <defs>
@@ -71,18 +79,18 @@
                     </svg>
                 </span>
                 <span>Playwright QA Analytics</span>
-            </div>
+            </a>
         </div>
 
         <div class="controls">
 
             <div class="theme-toggle-wrap">
                 <span class="theme-icon" id="themeIcon">Light</span>
-                <button id="themeToggle" title="Toggle dark mode"></button>
+                <button id="themeToggle" title="Toggle light and dark theme"></button>
             </div>
 
             <div class="dropdown" id="historyDropdown">
-                <button class="dropdown-btn">
+                <button class="dropdown-btn" title="Choose the reporting range for the overview dashboard">
                     History Range: <span id="historyLabel">All</span>
                 </button>
 
@@ -95,7 +103,7 @@
             </div>
 
             <div class="dropdown">
-                <button class="dropdown-btn">Export</button>
+                <button class="dropdown-btn" title="Export the current overview or run snapshot">Export</button>
                 <div class="dropdown-menu">
                     <button id="downloadPDF">Export PDF Report</button>
                     <button id="exportJson">Export History JSON</button>
@@ -103,7 +111,7 @@
             </div>
 
             <div class="dropdown">
-                <button class="dropdown-btn">Data</button>
+                <button class="dropdown-btn" title="Import dashboard history JSON into this browser session">Data</button>
                 <div class="dropdown-menu">
                     <button id="importJson">Import History JSON</button>
                 </div>
@@ -114,6 +122,7 @@
 
     <div class="context-bar">
         <div class="context-copy">
+            <div class="context-breadcrumb" id="contextBreadcrumb">Overview / All Runs</div>
             <div class="context-title">Analytics Scope</div>
             <div class="context-subtitle" id="dataScopeSummary">
                 Showing all available runs across live history, archives, and imported data.
@@ -123,10 +132,10 @@
             </div>
         </div>
         <div class="context-badges">
-            <span class="context-pill">Live retention: 14 days</span>
-            <span class="context-pill" id="archiveStatusBadge">Archives: enabled</span>
-            <span class="context-pill" id="importStatusBadge">Imported runs: 0</span>
-            <span class="context-pill" id="lastUpdatedBadge">Last updated: not loaded</span>
+            <span class="context-pill" title="Recent run history is kept live in the main history file for 14 days">Live retention: 14 days</span>
+            <span class="context-pill" id="archiveStatusBadge" title="Shows whether archived history files are currently included in the selected scope">Archives: enabled</span>
+            <span class="context-pill" id="importStatusBadge" title="Counts imported runs added only to this browser session">Imported runs: 0</span>
+            <span class="context-pill" id="lastUpdatedBadge" title="Latest run timestamp currently represented in the dashboard">Last updated: not loaded</span>
         </div>
     </div>
 

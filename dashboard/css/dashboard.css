@@ -83,6 +83,7 @@ body.dark .insights-card h3,
 body.dark .table-card h3,
 body.dark .footer-note,
 body.dark .context-title,
+body.dark .context-breadcrumb,
 body.dark .context-subtitle,
 body.dark .context-note,
 body.dark .context-pill,
@@ -454,6 +455,73 @@ body.sidebar-open .sidebar-nav {
     align-items: stretch;
 }
 
+.sidebar-search-wrap {
+    display: none;
+    margin: 2px 0 4px;
+    padding-left: 12px;
+}
+
+.sidebar-search-wrap.open {
+    display: block;
+    animation: fadeUp .22s var(--ease) both;
+}
+
+.sidebar-search-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sidebar-search-input {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid var(--border-strong);
+    background: rgba(255,255,255,.42);
+    color: var(--text-primary);
+    font: inherit;
+    outline: none;
+    transition: border-color .18s var(--ease), box-shadow .18s var(--ease), background .18s var(--ease);
+}
+
+.sidebar-search-input::placeholder {
+    color: var(--text-muted);
+}
+
+.sidebar-search-input:focus {
+    border-color: rgba(99,102,241,.4);
+    box-shadow: 0 0 0 3px rgba(99,102,241,.12);
+    background: rgba(255,255,255,.62);
+}
+
+.sidebar-search-clear {
+    flex: 0 0 auto;
+    padding: 9px 10px;
+    border-radius: 12px;
+    border: 1px solid var(--border-strong);
+    background: rgba(255,255,255,.42);
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color .18s var(--ease), color .18s var(--ease), background .18s var(--ease);
+}
+
+.sidebar-search-clear:hover {
+    background: rgba(255,255,255,.62);
+    color: var(--text-primary);
+    border-color: rgba(99,102,241,.4);
+}
+
+.sidebar-search-summary {
+    margin-top: 7px;
+    padding: 0 4px;
+    color: var(--text-muted);
+    font-size: 11px;
+    line-height: 1.45;
+}
+
 .sidebar-ambient {
     position: relative;
     margin-top: auto;
@@ -593,6 +661,24 @@ body.sidebar-open .sidebar-nav {
     box-shadow: 0 10px 22px rgba(99,102,241,.12);
 }
 
+.sidebar-run-link.active {
+    position: relative;
+    padding-left: 16px;
+    transform: translateX(4px);
+}
+
+.sidebar-run-link.active::before {
+    content: "";
+    position: absolute;
+    left: 6px;
+    top: 10px;
+    bottom: 10px;
+    width: 3px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, var(--indigo), var(--cyan));
+    box-shadow: 0 0 16px rgba(99,102,241,.28);
+}
+
 .sidebar-runs-list {
     display: none;
     flex-direction: column;
@@ -606,6 +692,73 @@ body.sidebar-open .sidebar-nav {
 
 .sidebar-runs-list.open {
     display: flex;
+}
+
+.sidebar-run-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.sidebar-run-group + .sidebar-run-group {
+    margin-top: 6px;
+}
+
+.sidebar-run-group-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 12px;
+    background: rgba(255,255,255,.05);
+    color: var(--text-secondary);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background .18s var(--ease), border-color .18s var(--ease), color .18s var(--ease), transform .18s var(--ease);
+}
+
+.sidebar-run-group-toggle:hover {
+    background: rgba(255,255,255,.09);
+    border-color: rgba(99,102,241,.24);
+    color: var(--text-primary);
+    transform: translateX(2px);
+}
+
+.sidebar-run-group-label {
+    color: inherit;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .7px;
+    text-transform: uppercase;
+}
+
+.sidebar-run-group-caret {
+    color: var(--text-muted);
+    font-size: 18px;
+    line-height: 1;
+}
+
+.sidebar-run-group-items {
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.sidebar-run-group.open .sidebar-run-group-items {
+    display: flex;
+    animation: fadeUp .18s var(--ease) both;
+}
+
+.run-empty {
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: rgba(255,255,255,.04);
+    color: var(--text-muted);
+    font-size: 12px;
 }
 
 .sidebar-run-link {
@@ -660,6 +813,18 @@ body.sidebar-open .sidebar-nav {
     display: flex;
     align-items: center;
     gap: 8px;
+    text-decoration: none;
+    transition: color .18s var(--ease), transform .18s var(--ease);
+}
+
+.title:hover {
+    color: var(--indigo);
+}
+
+.title:focus-visible {
+    outline: none;
+    color: var(--indigo);
+    transform: translateY(-1px);
 }
 
 .title-mark {
@@ -707,6 +872,15 @@ body.sidebar-open .sidebar-nav {
     min-width: 0;
 }
 
+.context-breadcrumb {
+    margin-bottom: 6px;
+    color: var(--indigo);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .3px;
+    text-transform: uppercase;
+}
+
 .context-title {
     font-size: 10px;
     font-weight: 700;
@@ -726,6 +900,53 @@ body.sidebar-open .sidebar-nav {
     margin-top: 6px;
     font-size: 12px;
     color: var(--text-muted);
+}
+
+body.dark .sidebar-search-input {
+    background: rgba(255,255,255,.05);
+    border-color: rgba(255,255,255,.12);
+    color: #fff;
+}
+
+body.dark .sidebar-search-input:focus {
+    background: rgba(255,255,255,.08);
+    border-color: rgba(129,140,248,.5);
+    box-shadow: 0 0 0 3px rgba(99,102,241,.16);
+}
+
+body.dark .sidebar-search-clear {
+    background: rgba(255,255,255,.05);
+    border-color: rgba(255,255,255,.12);
+    color: #fff;
+}
+
+body.dark .sidebar-search-clear:hover {
+    background: rgba(255,255,255,.08);
+    border-color: rgba(129,140,248,.5);
+}
+
+body.dark .sidebar-search-summary {
+    color: #fff;
+}
+
+body.dark .run-empty {
+    background: rgba(255,255,255,.04);
+    color: #fff;
+}
+
+body.dark .sidebar-run-group-label {
+    color: #fff;
+}
+
+body.dark .sidebar-run-group-toggle {
+    background: rgba(255,255,255,.04);
+    border-color: rgba(255,255,255,.08);
+    color: #fff;
+}
+
+body.dark .sidebar-run-group-toggle:hover {
+    background: rgba(255,255,255,.08);
+    border-color: rgba(129,140,248,.32);
 }
 
 .context-badges {
@@ -1631,6 +1852,10 @@ body.dark #themeToggle::after {
     .context-badges {
         width: 100%;
         justify-content: flex-start;
+    }
+
+    .context-breadcrumb {
+        margin-bottom: 5px;
     }
 
     .kpis, .charts {
