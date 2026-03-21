@@ -2,7 +2,6 @@
 if (localStorage.getItem("qa-theme") === "dark") document.body.classList.add("dark")
 
 let currentFilteredData = [];
-let runAccordionCharts = [];
 
 /* DROPDOWN */
 
@@ -212,7 +211,7 @@ function patchChartsWithTheme(t) {
         chart.update('none')
     }
 
-    ;[trendChart, passChart, flakyChart, qualityChart, failureHeatmap, statusChart, ...runAccordionCharts]
+    ;[trendChart, passChart, flakyChart, qualityChart, failureHeatmap, statusChart]
         .forEach(patchOne)
 }
 
@@ -316,72 +315,17 @@ function setAllSidebarMonthGroupsExpanded(expanded) {
     monthGroups.forEach(group => {
         const monthKey = group.dataset.monthKey
         const toggle = group.querySelector(".sidebar-run-group-toggle")
-        const caret = group.querySelector(".sidebar-run-group-caret")
 
         group.classList.toggle("open", expanded)
         if (toggle) {
+            toggle.classList.toggle("open", expanded)
             toggle.setAttribute("aria-expanded", expanded ? "true" : "false")
-        }
-        if (caret) {
-            caret.textContent = expanded ? "-" : "+"
         }
 
         if (monthKey) {
             if (expanded) sidebarExpandedMonths.add(monthKey)
             else sidebarExpandedMonths.delete(monthKey)
         }
-    })
-}
-
-function renderSidebarRunsMenu() {
-    const list = document.getElementById("sidebarRunsList")
-    if (!list) return
-
-    const runs = [...getAllPersistedHistoryData()].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-
-    if (!runs.length) {
-        list.innerHTML = `<div class="run-empty">No runs available.</div>`
-        return
-    }
-
-    list.innerHTML = runs.map((entry, index) => `
-        <a class="sidebar-run-link" data-run-timestamp="${entry.timestamp}" href="index.html?run=${encodeRunTimestamp(entry.timestamp)}">
-            <span class="sidebar-run-label">Run ${runs.length - index}</span>
-            <span class="sidebar-run-meta">${new Date(entry.timestamp).toLocaleString()} • ${entry.total || 0} tests</span>
-        </a>
-    `).join("")
-
-    updateSidebarSelection()
-}
-
-function initSidebar() {
-    const body = document.body
-    const sidebarToggle = document.getElementById("sidebarToggle")
-    const sidebarClose = document.getElementById("sidebarClose")
-    const sidebarBackdrop = document.getElementById("sidebarBackdrop")
-    const runsToggle = document.getElementById("sidebarRunsToggle")
-    const runsList = document.getElementById("sidebarRunsList")
-    const runsCaret = document.getElementById("sidebarRunsCaret")
-
-    const closeSidebar = () => body.classList.remove("sidebar-open")
-    const openSidebar = () => body.classList.add("sidebar-open")
-
-    sidebarToggle?.addEventListener("click", (e) => {
-        e.stopPropagation()
-        body.classList.toggle("sidebar-open")
-    })
-
-    sidebarClose?.addEventListener("click", closeSidebar)
-    sidebarBackdrop?.addEventListener("click", closeSidebar)
-
-    runsToggle?.addEventListener("click", () => {
-        const isOpen = runsList?.classList.toggle("open")
-        runsToggle.classList.toggle("open", !!isOpen)
-        if (runsCaret) runsCaret.textContent = "+"
-    })
-
-    document.querySelectorAll(".sidebar-link, .sidebar-run-link").forEach(link => {
-        link.addEventListener("click", closeSidebar)
     })
 }
 
@@ -587,18 +531,6 @@ function getInsightsForData(data) {
         ...detectFlakyTests(data),
         ...detectPerformanceRegression(data)
     ]
-}
-
-function getSafeRate(numerator, denominator) {
-    if (!denominator || denominator <= 0) return 0
-    return Math.round((numerator / denominator) * 100)
-}
-
-function destroyRunAccordionCharts() {
-    runAccordionCharts.forEach(chart => {
-        try { chart.destroy() } catch (error) {}
-    })
-    runAccordionCharts = []
 }
 
 function getPdfSlowTestStyle(status) {
@@ -1097,9 +1029,9 @@ function renderSidebarRunsMenu() {
 
         return `
         <div class="sidebar-run-group ${shouldOpen ? "open" : ""}" data-month-key="${groupKey}">
-            <button class="sidebar-run-group-toggle" type="button" aria-expanded="${shouldOpen ? "true" : "false"}">
+            <button class="sidebar-run-group-toggle ${shouldOpen ? "open" : ""}" type="button" aria-expanded="${shouldOpen ? "true" : "false"}">
                 <span class="sidebar-run-group-label">${groupData.label}</span>
-                <span class="sidebar-run-group-caret">${shouldOpen ? "-" : "+"}</span>
+                <span class="sidebar-run-group-caret">›</span>
             </button>
             <div class="sidebar-run-group-items">
             ${groupData.runs.map((entry) => {
@@ -1123,10 +1055,8 @@ function renderSidebarRunsMenu() {
             const willOpen = !group?.classList.contains("open")
 
             group?.classList.toggle("open", willOpen)
+            toggle.classList.toggle("open", willOpen)
             toggle.setAttribute("aria-expanded", willOpen ? "true" : "false")
-
-            const caret = toggle.querySelector(".sidebar-run-group-caret")
-            if (caret) caret.textContent = willOpen ? "-" : "+"
 
             if (monthKey) {
                 if (willOpen) sidebarExpandedMonths.add(monthKey)
@@ -1379,7 +1309,6 @@ function updateDashboard(data) {
     // Always call both — they handle empty data by rendering clear states
     populateSlowTests(data);
     renderInsights(data);
-    renderRunAccordion(data);
 
 }
 
@@ -2305,299 +2234,6 @@ function renderInsights(data) {
 
 }
 
-function buildRunInsightsMarkup(data) {
-
-    const insights = getInsightsForData(data)
-
-    if (insights.length === 0) {
-        return `<div class="run-empty">No insights available for this run.</div>`
-    }
-
-    const isDark = document.body.classList.contains("dark")
-    const textColor = isDark ? "#ffffff" : "#374151"
-    const bgOpacity = isDark ? "0.15" : "0.08"
-
-    return `
-        <ul class="run-insights-list">
-            ${insights.map(text => {
-                const meta = getInsightMeta(text)
-                const bgColor = meta.bg.replace(/[\d.]+\)$/, bgOpacity + ")")
-                return `
-                    <li style="
-                        background:${bgColor};
-                        border:1px solid ${meta.border}${isDark ? "44" : "33"};
-                        border-left:3px solid ${meta.border};
-                        color:${textColor};
-                    ">
-                        <strong style="color:${meta.accent};display:block;margin-bottom:4px;font-size:10px;letter-spacing:.6px;text-transform:uppercase">${meta.badge}</strong>
-                        ${text}
-                    </li>
-                `
-            }).join("")}
-        </ul>
-    `
-
-}
-
-function buildRunSlowTestsMarkup(entry) {
-
-    const results = [...(entry.results || [])]
-        .map(test => ({
-            name: test.name || "-",
-            status: test.status || "-",
-            start: Number(test.start) || 0,
-            stop: Number(test.stop) || 0
-        }))
-        .map(test => ({
-            ...test,
-            duration: Math.max(0, test.stop - test.start),
-            date: test.start ? new Date(test.start).toLocaleString() : "-"
-        }))
-        .sort((a, b) => b.duration - a.duration)
-
-    if (!results.length) {
-        return `<div class="run-empty">No test results available for this run.</div>`
-    }
-
-    return `
-        <table class="run-table">
-            <thead>
-                <tr>
-                    <th>Test Name</th>
-                    <th>Status</th>
-                    <th>Date</th>
-                    <th>Duration</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${results.map(test => `
-                    <tr>
-                        <td>${test.name}</td>
-                        <td>${test.status}</td>
-                        <td>${test.date}</td>
-                        <td>${formatDuration(test.duration)}</td>
-                    </tr>
-                `).join("")}
-            </tbody>
-        </table>
-    `
-
-}
-
-function initRunChartsForEntry(entry, index) {
-
-    const label = new Date(entry.timestamp).toLocaleString()
-    const passRate = getSafeRate(entry.passed || 0, entry.total || 0)
-    const stabilityBase = (entry.total || 0) - (entry.flaky || 0)
-    const stability = getSafeRate(entry.passed || 0, stabilityBase)
-
-    const failureCounts = {}
-    ;(entry.results || []).forEach(test => {
-        if (test.status === "failed") {
-            failureCounts[test.name] = (failureCounts[test.name] || 0) + 1
-        }
-    })
-
-    const chartIds = {
-        trend: document.getElementById(`runTrendChart-${index}`),
-        pass: document.getElementById(`runPassChart-${index}`),
-        status: document.getElementById(`runStatusChart-${index}`),
-        flaky: document.getElementById(`runFlakyChart-${index}`),
-        quality: document.getElementById(`runQualityChart-${index}`),
-        heatmap: document.getElementById(`runHeatmapChart-${index}`)
-    }
-
-    if (!chartIds.trend) return
-
-    const trend = new Chart(chartIds.trend, {
-        type: "line",
-        data: { labels: [label], datasets: [{ label: "Tests", data: [entry.total || 0], borderColor: "#4f6df5", tension: 0.3 }] },
-        options: chartOptions()
-    })
-
-    const pass = new Chart(chartIds.pass, {
-        type: "line",
-        data: { labels: [label], datasets: [{ label: "Pass %", data: [passRate], borderColor: "#2ecc71", tension: 0.3 }] },
-        options: chartOptions()
-    })
-
-    const status = new Chart(chartIds.status, {
-        type: "doughnut",
-        data: {
-            labels: ["Passed", "Failed", "Flaky"],
-            datasets: [{
-                data: [entry.passed || 0, entry.failed || 0, entry.flaky || 0],
-                backgroundColor: ["#2ecc71", "#e74c3c", "#f1c40f"],
-                radius: "95%"
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: "45%",
-            plugins: {
-                legend: {
-                    position: "top",
-                    labels: { color: getChartTheme().text, boxWidth: 12, padding: 16 }
-                }
-            }
-        }
-    })
-
-    const flaky = new Chart(chartIds.flaky, {
-        type: "line",
-        data: { labels: [label], datasets: [{ label: "Flaky", data: [entry.flaky || 0], borderColor: "#f39c12", tension: 0.3 }] },
-        options: chartOptions()
-    })
-
-    const quality = new Chart(chartIds.quality, {
-        type: "line",
-        data: {
-            labels: [label],
-            datasets: [
-                { label: "Pass Rate %", data: [passRate], borderColor: "#27ae60", backgroundColor: "rgba(39,174,96,0.2)", tension: 0.3 },
-                { label: "Stability %", data: [stability], borderColor: "#8e44ad", backgroundColor: "rgba(142,68,173,0.2)", tension: 0.3 }
-            ]
-        },
-        options: chartOptions({ plugins: { legend: { position: "top", labels: { color: getChartTheme().text } } } })
-    })
-
-    const heatmap = new Chart(chartIds.heatmap, {
-        type: "bar",
-        data: {
-            labels: Object.keys(failureCounts),
-            datasets: [{
-                label: "Failures",
-                data: Object.values(failureCounts),
-                backgroundColor: "rgba(255, 99, 132, 0.7)"
-            }]
-        },
-        options: chartOptions({
-            plugins: { legend: { display: true, labels: { color: getChartTheme().text } }, tooltip: { enabled: true } },
-            scales: {
-                x: { title: { display: true, text: "Test Name", color: getChartTheme().text }, ticks: { color: getChartTheme().subtext }, grid: { color: getChartTheme().grid } },
-                y: { title: { display: true, text: "Failure Count", color: getChartTheme().text }, ticks: { color: getChartTheme().subtext }, grid: { color: getChartTheme().grid }, beginAtZero: true }
-            }
-        })
-    })
-
-    runAccordionCharts.push(trend, pass, status, flaky, quality, heatmap)
-}
-
-function renderRunAccordion(data) {
-
-    const container = document.getElementById("runAccordion")
-    if (!container) return
-
-    destroyRunAccordionCharts()
-    container.innerHTML = ""
-
-    if (!Array.isArray(data) || data.length === 0) {
-        container.innerHTML = `<div class="run-empty">No runs available for the selected history range.</div>`
-        return
-    }
-
-    const orderedRuns = [...data].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-
-    orderedRuns.forEach((entry, index) => {
-        const total = entry.total || 0
-        const passRate = getSafeRate(entry.passed || 0, total)
-
-        const item = document.createElement("div")
-        item.className = "run-accordion-item"
-        item.innerHTML = `
-            <button class="run-accordion-toggle" type="button">
-                <div class="run-accordion-meta">
-                    <div class="run-accordion-title">Run ${orderedRuns.length - index} • ${new Date(entry.timestamp).toLocaleString()}</div>
-                    <div class="run-accordion-subtitle">${total} tests executed in this run with a ${passRate}% pass rate.</div>
-                </div>
-                <div class="run-accordion-badges">
-                    <span class="run-badge">Total: ${total}</span>
-                    <span class="run-badge status-passed">Passed: ${entry.passed || 0}</span>
-                    <span class="run-badge status-failed">Failed: ${entry.failed || 0}</span>
-                    <span class="run-badge status-flaky">Flaky: ${entry.flaky || 0}</span>
-                </div>
-            </button>
-            <div class="run-accordion-panel"></div>
-        `
-
-        const toggle = item.querySelector(".run-accordion-toggle")
-        const panel = item.querySelector(".run-accordion-panel")
-
-        toggle.onclick = () => {
-            const isOpen = item.classList.contains("open")
-
-            document.querySelectorAll(".run-accordion-item.open").forEach(openItem => {
-                if (openItem !== item) openItem.classList.remove("open")
-            })
-
-            item.classList.toggle("open", !isOpen)
-
-            if (!isOpen && !panel.dataset.rendered) {
-                panel.innerHTML = `
-                    <div class="run-dashboard">
-                        <div class="run-dashboard-grid">
-                            <div class="run-kpi">
-                                <div class="run-kpi-label">Total Tests</div>
-                                <div class="run-kpi-value">${entry.total || 0}</div>
-                            </div>
-                            <div class="run-kpi">
-                                <div class="run-kpi-label">Passed</div>
-                                <div class="run-kpi-value">${entry.passed || 0}</div>
-                            </div>
-                            <div class="run-kpi">
-                                <div class="run-kpi-label">Failed</div>
-                                <div class="run-kpi-value">${entry.failed || 0}</div>
-                            </div>
-                            <div class="run-kpi">
-                                <div class="run-kpi-label">Flaky</div>
-                                <div class="run-kpi-value">${entry.flaky || 0}</div>
-                            </div>
-                        </div>
-
-                        <div class="run-section-grid">
-                            <div class="run-section-card">
-                                <h4>Run Insights</h4>
-                                ${buildRunInsightsMarkup([entry])}
-                            </div>
-                            <div class="run-section-card">
-                                <h4>Run Metadata</h4>
-                                <table class="run-table">
-                                    <tbody>
-                                        <tr><td>Timestamp</td><td>${new Date(entry.timestamp).toLocaleString()}</td></tr>
-                                        <tr><td>Pass Rate</td><td>${passRate}%</td></tr>
-                                        <tr><td>Results in Run</td><td>${(entry.results || []).length}</td></tr>
-                                        <tr><td>Slowest Test</td><td>${((entry.results || []).map(test => ({ name: test.name, duration: Number(test.stop) - Number(test.start) })).sort((a, b) => b.duration - a.duration)[0] || { name: "-" }).name}</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <div class="run-charts-grid">
-                            <div class="run-chart-card"><h4>Execution Trend</h4><canvas id="runTrendChart-${index}"></canvas></div>
-                            <div class="run-chart-card"><h4>Pass Rate</h4><canvas id="runPassChart-${index}"></canvas></div>
-                            <div class="run-chart-card"><h4>Status Distribution</h4><canvas id="runStatusChart-${index}"></canvas></div>
-                            <div class="run-chart-card"><h4>Flaky Trend</h4><canvas id="runFlakyChart-${index}"></canvas></div>
-                            <div class="run-chart-card"><h4>Pass Rate vs Stability</h4><canvas id="runQualityChart-${index}"></canvas></div>
-                            <div class="run-chart-card"><h4>Failure Heatmap</h4><canvas id="runHeatmapChart-${index}"></canvas></div>
-                        </div>
-
-                        <div class="run-section-card">
-                            <h4>Slowest Tests In This Run</h4>
-                            ${buildRunSlowTestsMarkup(entry)}
-                        </div>
-                    </div>
-                `
-
-                initRunChartsForEntry(entry, index)
-                panel.dataset.rendered = "true"
-            }
-        }
-
-        container.appendChild(item)
-    })
-}
-
 function generateFailureAnalysis(data) {
 
     const failures = {};
@@ -2799,7 +2435,6 @@ function initThemeToggle() {
         // Re-render insights so inline text/bg colours update too
         if (currentFilteredData.length) {
             renderInsights(currentFilteredData)
-            renderRunAccordion(currentFilteredData)
         }
     })
 
@@ -2811,3 +2446,5 @@ if (document.readyState === "loading") {
 } else {
     initThemeToggle()
 }
+
+
