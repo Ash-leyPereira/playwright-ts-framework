@@ -1492,9 +1492,20 @@ function generateProfessionalReport() {
 
     const filter = document.getElementById("historyLabel").innerText;
 
-    let metaX = 12
-    metaX += drawMetaPill(pdf, `History Range: ${filter}`, metaX, y - 8, [238, 242, 255], [55, 48, 163]) + 4
-    drawMetaPill(pdf, `Generated: ${new Date().toLocaleString()}`, metaX, y - 8, [239, 246, 255], [30, 64, 175])
+    const metaY = y - 8
+    const historyWidth = drawMetaPill(pdf, `History Range: ${filter}`, 12, metaY, [238, 242, 255], [55, 48, 163])
+    const generatedText = `Generated: ${new Date().toLocaleString()}`
+    const generatedX = Math.min(12 + historyWidth + 3, 102)
+    drawMetaPill(pdf, generatedText, generatedX, metaY, [239, 246, 255], [30, 64, 175])
+
+    y += 6
+
+    y = drawPdfMetricCards(pdf, [
+        { label: "Total Tests", value: total, color: [79, 70, 229] },
+        { label: "Passed", value: passed, color: [22, 163, 74] },
+        { label: "Failed", value: failed, color: [220, 38, 38] },
+        { label: "Pass Rate", value: `${passRate}%`, color: [14, 165, 233] }
+    ], y)
 
     y += 6
 
@@ -1525,6 +1536,8 @@ function generateProfessionalReport() {
     const stats = calculateExecutionStats(currentFilteredData)
 
     if (stats) {
+        const estimatedStatsSectionHeight = 12 + 10 + (8 * 11)
+        y = ensurePdfSpace(pdf, y, estimatedStatsSectionHeight)
 
         y = addSectionHeader(pdf, "Execution Statistics", y)
 
@@ -1663,43 +1676,13 @@ function generateProfessionalReport() {
     const qualityImg = chartToJpeg(qualityChart)
     const heatmapImg = chartToJpeg(failureHeatmap)
 
-    pdf.setFont("helvetica", "bold")
-    pdf.setFontSize(10)
-    pdf.setTextColor(30, 58, 138)
+    drawChartCard(pdf, "Status Distribution", "target", [99,102,241], statusImg, 10, y, 90, 66)
+    drawChartCard(pdf, "Execution Trend", "chart", [34,197,94], trendImg, 110, y, 90, 66)
 
-    // Status Distribution label + icon
-    pdfIcon(pdf, "target", 13, y, 2, [99,102,241])
-    pdf.text("Status Distribution", 18, y + 1)
+    y += 74;
 
-    // Execution Trend label + icon
-    pdfIcon(pdf, "chart", 113, y, 2, [34,197,94])
-    pdf.text("Execution Trend", 118, y + 1)
-
-    pdf.setFont("helvetica", "normal")
-    pdf.setTextColor(0)
-    y += 5;
-
-    pdf.addImage(statusImg, "JPEG", 10, y, 90, 60);
-    pdf.addImage(trendImg,  "JPEG", 110, y, 90, 60);
-
-    y += 70;
-
-    pdf.setFont("helvetica", "bold")
-    pdf.setFontSize(10)
-    pdf.setTextColor(30, 58, 138)
-
-    pdfIcon(pdf, "check", 13, y, 2, [22,163,74])
-    pdf.text("Pass Rate Trend", 18, y + 1)
-
-    pdfIcon(pdf, "warning", 113, y, 2, [245,158,11])
-    pdf.text("Flaky Trend", 118, y + 1)
-
-    pdf.setFont("helvetica", "normal")
-    pdf.setTextColor(0)
-    y += 5;
-
-    pdf.addImage(passImg,  "JPEG", 10,  y, 90, 60);
-    pdf.addImage(flakyImg, "JPEG", 110, y, 90, 60);
+    drawChartCard(pdf, "Pass Rate Trend", "check", [22,163,74], passImg, 10, y, 90, 66)
+    drawChartCard(pdf, "Flaky Trend", "warning", [245,158,11], flakyImg, 110, y, 90, 66)
 
     addNewPage(pdf);
 
@@ -1707,22 +1690,8 @@ function generateProfessionalReport() {
 
     y = addSectionHeader(pdf, "Advanced Analytics", y - 4);
 
-    pdf.setFont("helvetica", "bold")
-    pdf.setFontSize(10)
-    pdf.setTextColor(30, 58, 138)
-
-    pdfIcon(pdf, "chart", 13, y, 2, [139,92,246])
-    pdf.text("Stability Trend", 18, y + 1)
-
-    pdfIcon(pdf, "cross", 113, y, 2, [239,68,68])
-    pdf.text("Failure Heatmap", 118, y + 1)
-
-    pdf.setFont("helvetica", "normal")
-    pdf.setTextColor(0)
-    y += 5;
-
-    pdf.addImage(qualityImg, "JPEG", 10, y, 90, 60);
-    pdf.addImage(heatmapImg, "JPEG", 110, y, 90, 60);
+    drawChartCard(pdf, "Stability Trend", "chart", [139,92,246], qualityImg, 10, y + 2, 90, 66)
+    drawChartCard(pdf, "Failure Heatmap", "cross", [239,68,68], heatmapImg, 110, y + 2, 90, 66)
 
     addNewPage(pdf);
 
@@ -1917,14 +1886,44 @@ const PDF_REPORT_STYLE = {
 }
 
 function drawMetaPill(pdf, text, x, y, fill, textColor = [30, 41, 59]) {
-    const width = pdf.getTextWidth(text) + 7
+    const padX = 3
+    const fontSize = 8.5
+    pdf.setFont("helvetica", "bold")
+    pdf.setFontSize(fontSize)
+    const width = pdf.getTextWidth(text) + padX * 2
     pdf.setFillColor(...fill)
     pdf.roundedRect(x, y, width, 7, 3.5, 3.5, "F")
-    pdf.setFont("helvetica", "bold")
-    pdf.setFontSize(8.5)
     pdf.setTextColor(...textColor)
-    pdf.text(text, x + 3.5, y + 4.6)
+    pdf.text(text, x + padX, y + 4.6)
     return width
+}
+
+function drawPdfMetricCards(pdf, cards, startY) {
+    const cardWidth = 43
+    const cardHeight = 18
+    const gutter = 6
+    const startX = 12
+
+    cards.forEach((card, index) => {
+        const x = startX + index * (cardWidth + gutter)
+        pdf.setFillColor(255, 255, 255)
+        pdf.setDrawColor(...PDF_REPORT_STYLE.line)
+        pdf.roundedRect(x, startY, cardWidth, cardHeight, 3, 3, "FD")
+        pdf.setFillColor(...card.color)
+        pdf.roundedRect(x + 2.5, startY + 2.5, 4, cardHeight - 5, 1.2, 1.2, "F")
+
+        pdf.setFont("helvetica", "bold")
+        pdf.setFontSize(7.5)
+        pdf.setTextColor(...PDF_REPORT_STYLE.subtext)
+        pdf.text(card.label, x + 9, startY + 6)
+
+        pdf.setFont("helvetica", "bold")
+        pdf.setFontSize(13)
+        pdf.setTextColor(...PDF_REPORT_STYLE.ink)
+        pdf.text(String(card.value), x + 9, startY + 13)
+    })
+
+    return startY + cardHeight
 }
 
 function getModernTableOptions(pdf, startY, accent, bodyRows) {
@@ -1933,6 +1932,7 @@ function getModernTableOptions(pdf, startY, accent, bodyRows) {
         head: [["Metric", "Value"]],
         body: bodyRows,
         theme: "plain",
+        pageBreak: "avoid",
         margin: { left: 12, right: 12 },
         styles: {
             fontSize: 10,
@@ -1978,6 +1978,34 @@ function getModernTableOptions(pdf, startY, accent, bodyRows) {
             }
         }
     }
+}
+
+function ensurePdfSpace(pdf, y, requiredHeight) {
+    const pageLimit = pdf.internal.pageSize.getHeight() - PAGE_BOTTOM_MARGIN
+    if (y + requiredHeight <= pageLimit) return y
+
+    addNewPage(pdf)
+    return PAGE_TOP_MARGIN
+}
+
+function drawChartCard(pdf, title, icon, iconColor, image, x, y, width, height) {
+    pdf.setFillColor(255, 255, 255)
+    pdf.setDrawColor(...PDF_REPORT_STYLE.line)
+    pdf.roundedRect(x, y, width, height, 3, 3, "FD")
+
+    pdf.setFillColor(...PDF_REPORT_STYLE.surface)
+    pdf.roundedRect(x + 2, y + 2, width - 4, 10, 2, 2, "F")
+    pdf.setDrawColor(...iconColor)
+    pdf.setLineWidth(0.5)
+    pdf.line(x + width - 24, y + 7, x + width - 6, y + 7)
+
+    pdfIcon(pdf, icon, x + 6, y + 7, 1.7, iconColor)
+    pdf.setFont("helvetica", "bold")
+    pdf.setFontSize(9.5)
+    pdf.setTextColor(...PDF_REPORT_STYLE.ink)
+    pdf.text(title, x + 11, y + 8)
+
+    pdf.addImage(image, "JPEG", x + 3, y + 15, width - 6, height - 18)
 }
 
 function addSectionHeader(pdf, title, y) {
