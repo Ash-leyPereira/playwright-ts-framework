@@ -226,6 +226,8 @@ let importedHistoryData = []
 let currentHistoryRange = "all"
 const archiveCache = {}
 const selectedRunTimestamp = new URLSearchParams(window.location.search).get("run")
+let sidebarRunsSearchTerm = ""
+const sidebarExpandedMonths = new Set()
 
 async function fetchJsonArray(url) {
 
@@ -274,6 +276,10 @@ async function ensureSidebarRunDataLoaded() {
 function updateSidebarSelection() {
     const overviewLink = document.getElementById("overviewNavLink")
     const runLinks = document.querySelectorAll(".sidebar-run-link")
+    const runsList = document.getElementById("sidebarRunsList")
+    const runsToggle = document.getElementById("sidebarRunsToggle")
+    const searchWrap = document.getElementById("sidebarRunsSearchWrap")
+    const monthGroups = document.querySelectorAll(".sidebar-run-group")
 
     if (overviewLink) {
         overviewLink.classList.toggle("active", !selectedRunTimestamp)
@@ -281,6 +287,49 @@ function updateSidebarSelection() {
 
     runLinks.forEach(link => {
         link.classList.toggle("active", link.dataset.runTimestamp === selectedRunTimestamp)
+    })
+
+    if (selectedRunTimestamp && runsList && runsToggle) {
+        runsList.classList.add("open")
+        runsToggle.classList.add("open")
+        searchWrap?.classList.add("open")
+
+        monthGroups.forEach(group => {
+            if (group.querySelector(`.sidebar-run-link[data-run-timestamp="${selectedRunTimestamp}"]`)) {
+                group.classList.add("open")
+                if (group.dataset.monthKey) sidebarExpandedMonths.add(group.dataset.monthKey)
+            }
+        })
+
+        const activeLink = runsList.querySelector(".sidebar-run-link.active")
+        if (activeLink) {
+            requestAnimationFrame(() => {
+                activeLink.scrollIntoView({ block: "nearest" })
+            })
+        }
+    }
+}
+
+function setAllSidebarMonthGroupsExpanded(expanded) {
+    const monthGroups = document.querySelectorAll(".sidebar-run-group")
+
+    monthGroups.forEach(group => {
+        const monthKey = group.dataset.monthKey
+        const toggle = group.querySelector(".sidebar-run-group-toggle")
+        const caret = group.querySelector(".sidebar-run-group-caret")
+
+        group.classList.toggle("open", expanded)
+        if (toggle) {
+            toggle.setAttribute("aria-expanded", expanded ? "true" : "false")
+        }
+        if (caret) {
+            caret.textContent = expanded ? "-" : "+"
+        }
+
+        if (monthKey) {
+            if (expanded) sidebarExpandedMonths.add(monthKey)
+            else sidebarExpandedMonths.delete(monthKey)
+        }
     })
 }
 
@@ -831,6 +880,7 @@ function updateContextSummary(data) {
 
     const dataScopeSummary = document.getElementById("dataScopeSummary")
     const dataScopeNote = document.getElementById("dataScopeNote")
+    const contextBreadcrumb = document.getElementById("contextBreadcrumb")
     const archiveStatusBadge = document.getElementById("archiveStatusBadge")
     const importStatusBadge = document.getElementById("importStatusBadge")
     const lastUpdatedBadge = document.getElementById("lastUpdatedBadge")
@@ -853,6 +903,14 @@ function updateContextSummary(data) {
 
             dataScopeSummary.innerText =
                 `Viewing ${rangeLabel.toLowerCase()} with ${runCount} run${runCount === 1 ? "" : "s"} from ${sourceParts.join(", ")}.`
+        }
+    }
+
+    if (contextBreadcrumb) {
+        if (currentHistoryRange === "run" && data[0]) {
+            contextBreadcrumb.innerText = "Overview / Run Snapshot"
+        } else {
+            contextBreadcrumb.innerText = `Overview / ${rangeLabel}`
         }
     }
 
@@ -966,19 +1024,201 @@ document.getElementById("importJson").onclick = () => {
     document.getElementById("importJsonInput").click()
 };
 
+function renderSidebarRunsMenu() {
+    const list = document.getElementById("sidebarRunsList")
+    const searchWrap = document.getElementById("sidebarRunsSearchWrap")
+    const searchInput = document.getElementById("sidebarRunSearch")
+    const searchSummary = document.getElementById("sidebarRunsSummary")
+    const runsLabel = document.getElementById("sidebarRunsLabel")
+    if (!list) return
+
+    const runs = [...getAllPersistedHistoryData()].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+    const normalizedSearchTerm = sidebarRunsSearchTerm.trim().toLowerCase()
+    const filteredRuns = runs.filter((entry, index) => {
+        if (!normalizedSearchTerm) return true
+
+        const runLabel = `run ${runs.length - index}`.toLowerCase()
+        const runDate = new Date(entry.timestamp).toLocaleString().toLowerCase()
+        const totalLabel = `${entry.total || 0} tests`
+
+        return [runLabel, runDate, totalLabel.toLowerCase()].some(value => value.includes(normalizedSearchTerm))
+    })
+
+    if (!runs.length) {
+        searchWrap?.classList.remove("open")
+        if (runsLabel) runsLabel.innerText = "Individual Runs"
+        if (searchSummary) searchSummary.innerText = "No run history is available yet."
+        list.innerHTML = `<div class="run-empty">No runs available.</div>`
+        return
+    }
+
+    if (runsLabel) {
+        runsLabel.innerText = `Individual Runs (${runs.length})`
+    }
+
+    if (searchInput && searchInput.value !== sidebarRunsSearchTerm) {
+        searchInput.value = sidebarRunsSearchTerm
+    }
+
+    if (!filteredRuns.length) {
+        if (searchSummary) {
+            searchSummary.innerText = `No matches for "${sidebarRunsSearchTerm}".`
+        }
+        list.innerHTML = `<div class="run-empty">No runs match "${sidebarRunsSearchTerm}".</div>`
+        updateSidebarSelection()
+        return
+    }
+
+    if (searchSummary) {
+        const groupCount = new Set(filteredRuns.map(entry => new Date(entry.timestamp).toLocaleDateString(undefined, { month: "long", year: "numeric" }))).size
+        searchSummary.innerText = normalizedSearchTerm
+            ? `Showing ${filteredRuns.length} of ${runs.length} runs across ${groupCount} month${groupCount === 1 ? "" : "s"}.`
+            : `Showing ${runs.length} runs across ${groupCount} month${groupCount === 1 ? "" : "s"}.`
+    }
+
+    const groupedRuns = filteredRuns.reduce((groups, entry) => {
+        const date = new Date(entry.timestamp)
+        const groupLabel = date.toLocaleDateString(undefined, { month: "long", year: "numeric" })
+        const groupKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`
+        if (!groups[groupKey]) groups[groupKey] = { label: groupLabel, runs: [] }
+        groups[groupKey].runs.push(entry)
+        return groups
+    }, {})
+
+    list.innerHTML = Object.entries(groupedRuns).map(([groupKey, groupData], groupIndex) => {
+        const shouldOpen = normalizedSearchTerm
+            || sidebarExpandedMonths.has(groupKey)
+            || (selectedRunTimestamp && groupData.runs.some(entry => entry.timestamp === selectedRunTimestamp))
+            || groupIndex === 0
+
+        if (shouldOpen) {
+            sidebarExpandedMonths.add(groupKey)
+        }
+
+        return `
+        <div class="sidebar-run-group ${shouldOpen ? "open" : ""}" data-month-key="${groupKey}">
+            <button class="sidebar-run-group-toggle" type="button" aria-expanded="${shouldOpen ? "true" : "false"}">
+                <span class="sidebar-run-group-label">${groupData.label}</span>
+                <span class="sidebar-run-group-caret">${shouldOpen ? "-" : "+"}</span>
+            </button>
+            <div class="sidebar-run-group-items">
+            ${groupData.runs.map((entry) => {
+                const index = runs.findIndex(run => run.timestamp === entry.timestamp)
+                return `
+                <a class="sidebar-run-link" data-run-timestamp="${entry.timestamp}" href="index.html?run=${encodeRunTimestamp(entry.timestamp)}" title="${new Date(entry.timestamp).toLocaleString()}">
+                    <span class="sidebar-run-label">Run ${runs.length - index}</span>
+                    <span class="sidebar-run-meta">${new Date(entry.timestamp).toLocaleString()} | ${entry.total || 0} tests</span>
+                </a>
+            `
+            }).join("")}
+            </div>
+        </div>
+    `
+    }).join("")
+
+    list.querySelectorAll(".sidebar-run-group-toggle").forEach(toggle => {
+        toggle.addEventListener("click", () => {
+            const group = toggle.closest(".sidebar-run-group")
+            const monthKey = group?.dataset.monthKey
+            const willOpen = !group?.classList.contains("open")
+
+            group?.classList.toggle("open", willOpen)
+            toggle.setAttribute("aria-expanded", willOpen ? "true" : "false")
+
+            const caret = toggle.querySelector(".sidebar-run-group-caret")
+            if (caret) caret.textContent = willOpen ? "-" : "+"
+
+            if (monthKey) {
+                if (willOpen) sidebarExpandedMonths.add(monthKey)
+                else sidebarExpandedMonths.delete(monthKey)
+            }
+        })
+    })
+
+    updateSidebarSelection()
+}
+
+function initSidebar() {
+    const body = document.body
+    const sidebarToggle = document.getElementById("sidebarToggle")
+    const sidebarClose = document.getElementById("sidebarClose")
+    const sidebarBackdrop = document.getElementById("sidebarBackdrop")
+    const runsToggle = document.getElementById("sidebarRunsToggle")
+    const runsList = document.getElementById("sidebarRunsList")
+    const runsCaret = document.getElementById("sidebarRunsCaret")
+    const runSearch = document.getElementById("sidebarRunSearch")
+    const runSearchClear = document.getElementById("sidebarRunSearchClear")
+    const runSearchWrap = document.getElementById("sidebarRunsSearchWrap")
+
+    const closeSidebar = () => body.classList.remove("sidebar-open")
+
+    sidebarToggle?.addEventListener("click", (e) => {
+        e.stopPropagation()
+        body.classList.toggle("sidebar-open")
+    })
+
+    sidebarClose?.addEventListener("click", closeSidebar)
+    sidebarBackdrop?.addEventListener("click", closeSidebar)
+
+    runsToggle?.addEventListener("click", () => {
+        const isOpen = runsList?.classList.toggle("open")
+        runsToggle.classList.toggle("open", !!isOpen)
+        runSearchWrap?.classList.toggle("open", !!isOpen)
+        if (runsCaret) runsCaret.textContent = "+"
+        if (isOpen) setAllSidebarMonthGroupsExpanded(false)
+        if (isOpen && runSearch) {
+            requestAnimationFrame(() => runSearch.focus())
+        }
+    })
+
+    document.querySelectorAll(".sidebar-link, .sidebar-run-link").forEach(link => {
+        link.addEventListener("click", closeSidebar)
+    })
+
+    runSearch?.addEventListener("input", (event) => {
+        sidebarRunsSearchTerm = event.target.value
+        renderSidebarRunsMenu()
+        runsList?.classList.add("open")
+        runsToggle?.classList.add("open")
+        runSearchWrap?.classList.add("open")
+        setAllSidebarMonthGroupsExpanded(Boolean(sidebarRunsSearchTerm.trim()))
+    })
+
+    runSearchClear?.addEventListener("click", () => {
+        sidebarRunsSearchTerm = ""
+        if (runSearch) runSearch.value = ""
+        renderSidebarRunsMenu()
+        runsList?.classList.add("open")
+        runsToggle?.classList.add("open")
+        runSearchWrap?.classList.add("open")
+        setAllSidebarMonthGroupsExpanded(false)
+        runSearch?.focus()
+    })
+
+    if (selectedRunTimestamp) {
+        runsList?.classList.add("open")
+        runsToggle?.classList.add("open")
+        runSearchWrap?.classList.add("open")
+        setAllSidebarMonthGroupsExpanded(false)
+    }
+}
+
 function updateRunModeUI() {
     const historyDropdown = document.getElementById("historyDropdown")
     const dataDropdown = document.getElementById("importJson")?.closest(".dropdown")
     const importBadge = document.getElementById("importStatusBadge")
+    const dataScopeNote = document.getElementById("dataScopeNote")
 
     if (currentHistoryRange === "run") {
         if (historyDropdown) historyDropdown.style.display = "none"
         if (dataDropdown) dataDropdown.style.display = "none"
         if (importBadge) importBadge.style.display = "none"
+        if (dataScopeNote) dataScopeNote.innerText = "Exports on this page use only the selected run snapshot."
     } else {
         if (historyDropdown) historyDropdown.style.display = ""
         if (dataDropdown) dataDropdown.style.display = ""
         if (importBadge) importBadge.style.display = ""
+        if (dataScopeNote) dataScopeNote.innerText = "Imported JSON is session-only and does not overwrite dashboard files."
     }
 }
 
@@ -1323,13 +1563,11 @@ function generateProfessionalReport() {
 
     const filter = document.getElementById("historyLabel").innerText;
 
-    pdf.setFontSize(9)
-    pdf.setTextColor(30, 58, 138)
+    let metaX = 12
+    metaX += drawMetaPill(pdf, `History Range: ${filter}`, metaX, y - 8, [238, 242, 255], [55, 48, 163]) + 4
+    drawMetaPill(pdf, `Generated: ${new Date().toLocaleString()}`, metaX, y - 8, [239, 246, 255], [30, 64, 175])
 
-    pdf.text("History Range: " + filter, 10, y - 5)
-    pdf.text("Generated: " + new Date().toLocaleString(), 150, y - 5)
-
-    y += 3
+    y += 6
 
     /* QA SUMMARY */
 
@@ -1346,25 +1584,7 @@ function generateProfessionalReport() {
         ["Quality Score", (passRate - (flaky / total * 100)).toFixed(1) + "%"]
     ];
 
-    pdf.autoTable({
-        startY: y,
-        head: [["Metric", "Value"]],
-        body: summaryRows,
-        theme: "grid",
-        styles: { fontSize: 10, cellPadding: { top: 3, bottom: 3, left: 8, right: 3 } },
-        headStyles: { fillColor: [79, 70, 229], fontStyle: "bold" },
-        didDrawCell: function(data) {
-            if (data.section === "body" && data.column.index === 0) {
-                const label = data.cell.raw
-                const mi = METRIC_ICONS[label]
-                if (mi) {
-                    const cx = data.cell.x + 3
-                    const cy = data.cell.y + data.cell.height / 2
-                    pdfIcon(pdf, mi.icon, cx, cy, 1.6, mi.color)
-                }
-            }
-        }
-    });
+    pdf.autoTable(getModernTableOptions(pdf, y, [79, 70, 229], summaryRows));
 
     let tableEndY = pdf.lastAutoTable.finalY;
     let iy = PAGE_TOP_MARGIN
@@ -1391,25 +1611,7 @@ function generateProfessionalReport() {
             ["Fastest Duration", formatDuration(stats.fastest.duration)]
         ]
 
-        pdf.autoTable({
-            startY: y,
-            head: [statsData[0]],
-            body: statsData.slice(1),
-            theme: "grid",
-            styles: { fontSize: 10, cellPadding: { top: 3, bottom: 3, left: 8, right: 3 } },
-            headStyles: { fillColor: [14, 165, 233], fontStyle: "bold" },
-            didDrawCell: function(data) {
-                if (data.section === "body" && data.column.index === 0) {
-                    const label = data.cell.raw
-                    const mi = METRIC_ICONS[label]
-                    if (mi) {
-                        const cx = data.cell.x + 3
-                        const cy = data.cell.y + data.cell.height / 2
-                        pdfIcon(pdf, mi.icon, cx, cy, 1.6, mi.color)
-                    }
-                }
-            }
-        })
+        pdf.autoTable(getModernTableOptions(pdf, y, [14, 165, 233], statsData.slice(1)))
 
         y = pdf.lastAutoTable.finalY + 10
 
@@ -1753,6 +1955,7 @@ const SECTION_ICONS = {
     "QA Insights":         { icon: "star",   color: [245,158,11] },
     "Analytics Charts":    { icon: "chart",  color: [99,102,241] },
     "Advanced Analytics":  { icon: "rocket", color: [139,92,246] },
+    "Slowest Tests":       { icon: "warning", color: [234,88,12] },
 }
 
 /* KPI row icons in summary table */
@@ -1773,53 +1976,139 @@ const METRIC_ICONS = {
     "Fastest Duration":              { icon: "clock",   color: [22,163,74]   },
 }
 
+const PDF_REPORT_STYLE = {
+    ink: [17, 24, 39],
+    subtext: [71, 85, 105],
+    line: [226, 232, 240],
+    surface: [248, 250, 252],
+    surfaceAlt: [241, 245, 249],
+    indigo: [79, 70, 229],
+    blue: [14, 165, 233],
+    slate: [30, 41, 59]
+}
+
+function drawMetaPill(pdf, text, x, y, fill, textColor = [30, 41, 59]) {
+    const width = pdf.getTextWidth(text) + 7
+    pdf.setFillColor(...fill)
+    pdf.roundedRect(x, y, width, 7, 3.5, 3.5, "F")
+    pdf.setFont("helvetica", "bold")
+    pdf.setFontSize(8.5)
+    pdf.setTextColor(...textColor)
+    pdf.text(text, x + 3.5, y + 4.6)
+    return width
+}
+
+function getModernTableOptions(pdf, startY, accent, bodyRows) {
+    return {
+        startY,
+        head: [["Metric", "Value"]],
+        body: bodyRows,
+        theme: "plain",
+        margin: { left: 12, right: 12 },
+        styles: {
+            fontSize: 10,
+            textColor: PDF_REPORT_STYLE.ink,
+            lineColor: PDF_REPORT_STYLE.line,
+            lineWidth: 0.2,
+            cellPadding: { top: 4, bottom: 4, left: 8, right: 5 }
+        },
+        headStyles: {
+            fillColor: accent,
+            textColor: [255, 255, 255],
+            fontStyle: "bold",
+            halign: "left",
+            cellPadding: { top: 4.5, bottom: 4.5, left: 8, right: 5 }
+        },
+        alternateRowStyles: {
+            fillColor: PDF_REPORT_STYLE.surface
+        },
+        bodyStyles: {
+            fillColor: [255, 255, 255]
+        },
+        tableLineColor: PDF_REPORT_STYLE.line,
+        tableLineWidth: 0.2,
+        didParseCell: (data) => {
+            if (data.section === "body" && data.row.index % 2 === 1) {
+                data.cell.styles.fillColor = PDF_REPORT_STYLE.surfaceAlt
+            }
+        },
+        willDrawCell: (data) => {
+            if (data.section === "body" && data.column.index === 1) {
+                data.cell.styles.fontStyle = "bold"
+            }
+        },
+        didDrawCell: function(data) {
+            if (data.section === "body" && data.column.index === 0) {
+                const label = data.cell.raw
+                const mi = METRIC_ICONS[label]
+                if (mi) {
+                    const cx = data.cell.x + 3
+                    const cy = data.cell.y + data.cell.height / 2
+                    pdfIcon(pdf, mi.icon, cx, cy, 1.6, mi.color)
+                }
+            }
+        }
+    }
+}
+
 function addSectionHeader(pdf, title, y) {
 
-    // background band
-    pdf.setFillColor(232, 234, 255)
-    pdf.rect(0, y - 6, 210, 11, "F")
-
-    // left accent bar
-    pdf.setFillColor(79, 70, 229)
-    pdf.rect(0, y - 6, 3, 11, "F")
-
-    // icon
     const si = SECTION_ICONS[title]
-    if (si) pdfIcon(pdf, si.icon, 9, y + 0.5, 2.5, si.color)
+    const accent = si?.color || PDF_REPORT_STYLE.indigo
 
-    // title text
+    pdf.setFillColor(...PDF_REPORT_STYLE.surface)
+    pdf.roundedRect(10, y - 5, 190, 12, 3, 3, "F")
+    pdf.setDrawColor(...PDF_REPORT_STYLE.line)
+    pdf.setLineWidth(0.2)
+    pdf.roundedRect(10, y - 5, 190, 12, 3, 3, "S")
+
+    pdf.setFillColor(...accent)
+    pdf.roundedRect(13, y - 2, 7, 6, 2, 2, "F")
+    if (si) pdfIcon(pdf, si.icon, 16.5, y + 1, 1.6, [255, 255, 255])
+
     pdf.setFontSize(11)
     pdf.setFont("helvetica", "bold")
-    pdf.setTextColor(30, 58, 138)
-    pdf.text(title, si ? 15 : 8, y + 0.8)
+    pdf.setTextColor(...PDF_REPORT_STYLE.ink)
+    pdf.text(title, 24, y + 1.4)
+
+    pdf.setDrawColor(...accent)
+    pdf.setLineWidth(0.7)
+    pdf.line(160, y + 1.4, 196, y + 1.4)
 
     pdf.setFont("helvetica", "normal")
     pdf.setTextColor(0)
 
-    return y + 13
+    return y + 14
 }
 
 function drawPageHeader(pdf) {
 
     const w = pdf.internal.pageSize.width
 
-    // gradient-like: two overlapping rects
-    pdf.setFillColor(67, 56, 202)
+    pdf.setFillColor(...PDF_REPORT_STYLE.slate)
     pdf.rect(0, 0, w, PAGE_HEADER_HEIGHT, "F")
     pdf.setFillColor(79, 70, 229)
-    pdf.rect(0, 0, w * 0.6, PAGE_HEADER_HEIGHT, "F")
+    pdf.rect(0, 0, w * 0.7, PAGE_HEADER_HEIGHT, "F")
+    pdf.setFillColor(37, 99, 235)
+    pdf.rect(w * 0.7, 0, w * 0.3, PAGE_HEADER_HEIGHT, "F")
+    pdf.setFillColor(99, 102, 241)
+    pdf.circle(w - 18, 8, 10, "F")
+    pdf.setFillColor(56, 189, 248)
+    pdf.circle(w - 6, 18, 7, "F")
 
-    // rocket icon top-left
     pdfIcon(pdf, "rocket", 10, PAGE_HEADER_HEIGHT / 2, 4, [255, 255, 255])
 
-    // title
-    pdf.setFontSize(16)
+    pdf.setFontSize(17)
     pdf.setFont("helvetica", "bold")
     pdf.setTextColor(255, 255, 255)
-    pdf.text("Playwright QA Analytics Report", 18, PAGE_HEADER_HEIGHT / 2 + 2)
+    pdf.text("Playwright QA Analytics Report", 18, PAGE_HEADER_HEIGHT / 2 + 1.5)
 
-    // thin rainbow strip at bottom of header
-    const stripeH = 1.5
+    pdf.setFontSize(8)
+    pdf.setFont("helvetica", "normal")
+    pdf.setTextColor(224, 231, 255)
+    pdf.text("Quality trends, execution health, and test stability in one report", 18, PAGE_HEADER_HEIGHT / 2 + 6.3)
+
+    const stripeH = 1.2
     const stripeY = PAGE_HEADER_HEIGHT - stripeH
     const stripes = [
         [99,102,241], [34,211,238], [34,197,94],
