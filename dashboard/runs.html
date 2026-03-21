@@ -1,105 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <title>Playwright QA Analytics - Individual Runs</title>
+    <title>Playwright QA Analytics - Redirecting</title>
+    <meta http-equiv="refresh" content="0; url=index.html">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-
     <link rel="stylesheet" href="css/dashboard.css" />
-
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-
 <body>
-
     <div class="header">
-
-            <div class="title">
+        <div class="header-left">
+            <a class="title" href="index.html" title="Go to overview dashboard">
                 <span class="title-mark" aria-hidden="true">
                     <svg viewBox="0 0 28 28" role="img" focusable="false">
                         <defs>
-                            <linearGradient id="titleGradientRuns" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <linearGradient id="titleGradientRedirect" x1="0%" y1="0%" x2="100%" y2="100%">
                                 <stop offset="0%" stop-color="#4f46e5"></stop>
                                 <stop offset="100%" stop-color="#22d3ee"></stop>
                             </linearGradient>
                         </defs>
-                        <rect x="3" y="3" width="22" height="22" rx="8" fill="url(#titleGradientRuns)" opacity="0.16"></rect>
-                        <circle cx="14" cy="14" r="5.5" fill="url(#titleGradientRuns)"></circle>
+                        <rect x="3" y="3" width="22" height="22" rx="8" fill="url(#titleGradientRedirect)" opacity="0.16"></rect>
+                        <circle cx="14" cy="14" r="5.5" fill="url(#titleGradientRedirect)"></circle>
                         <path d="M8 14h3M17 14h3M14 8v3M14 17v3" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"></path>
                     </svg>
                 </span>
                 <span>Playwright QA Analytics</span>
-            </div>
-
-        <div class="controls">
-
-            <div class="theme-toggle-wrap">
-                <span class="theme-icon" id="themeIcon">Light</span>
-                <button id="themeToggle" title="Toggle dark mode"></button>
-            </div>
-
-            <div class="dropdown nav-menu">
-                <button class="dropdown-btn nav-toggle" aria-label="Open navigation menu">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </button>
-                <div class="dropdown-menu">
-                    <a href="index.html">Overview</a>
-                    <a href="runs.html">Individual Runs</a>
-                </div>
-            </div>
-
-            <div class="dropdown" id="historyDropdown">
-                <button class="dropdown-btn">
-                    History Range: <span id="historyLabel">All</span>
-                </button>
-
-                <div class="dropdown-menu">
-                    <button data-range="all">All</button>
-                    <button data-range="today">Today</button>
-                    <button data-range="7">Last 7 Days</button>
-                    <button data-range="30">Last 30 Days</button>
-                </div>
-            </div>
-
+            </a>
         </div>
     </div>
 
     <div class="context-bar">
         <div class="context-copy">
-            <div class="context-title">Individual Run Explorer</div>
-            <div class="context-subtitle" id="dataScopeSummary">
-                Expand any run to inspect its full dashboard snapshot on a dedicated page.
-            </div>
-            <div class="context-note" id="dataScopeNote">
-                Each panel shows one run only and does not apply any extra filtering inside the run.
-            </div>
-        </div>
-        <div class="context-badges">
-            <span class="context-pill" id="archiveStatusBadge">Archives: enabled</span>
-            <span class="context-pill" id="runCountBadge">Runs loaded: 0</span>
-            <span class="context-pill" id="lastUpdatedBadge">Last updated: not loaded</span>
+            <div class="context-breadcrumb">Overview / Redirect</div>
+            <div class="context-title">Navigation Update</div>
+            <div class="context-subtitle">The dedicated runs page has been retired.</div>
+            <div class="context-note">You are being redirected to the overview dashboard, where individual runs are available from the sidebar.</div>
         </div>
     </div>
 
-    <div class="runs-card">
-        <div class="runs-card-head">
-            <div>
-                <h3>Individual Runs</h3>
-                <p>Each accordion item opens a full per-run dashboard using the same metrics and charts as the main analytics page.</p>
-            </div>
-        </div>
-        <div id="runAccordion" class="run-accordion"></div>
-    </div>
-
-    <div class="footer-note">
-        QA Analytics Dashboard • Playwright Automation
-    </div>
-
-    <script src="js/runs.js"></script>
-
+    <script>
+        window.location.replace("index.html");
+    </script>
 </body>
-
 </html>
