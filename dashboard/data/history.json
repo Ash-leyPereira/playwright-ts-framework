@@ -1,94 +1,5 @@
 [
   {
-    "total": 18,
-    "passed": 9,
-    "failed": 9,
-    "flaky": 0,
-    "stabilityScore": "50.00%",
-    "flakyTests": [],
-    "timestamp": "2026-03-14T13:25:33.278Z"
-  },
-  {
-    "total": 18,
-    "passed": 9,
-    "failed": 9,
-    "flaky": 0,
-    "stabilityScore": "50.00%",
-    "passRate": "50.00%",
-    "flakyTests": [],
-    "timestamp": "2026-03-14T13:32:38.949Z"
-  },
-  {
-    "total": 18,
-    "passed": 9,
-    "failed": 9,
-    "flaky": 0,
-    "stabilityScore": "50.00%",
-    "passRate": "50.00%",
-    "flakyTests": [],
-    "timestamp": "2026-03-14T13:46:03.249Z"
-  },
-  {
-    "total": 18,
-    "passed": 9,
-    "failed": 9,
-    "flaky": 0,
-    "stabilityScore": "50.00%",
-    "passRate": "50.00%",
-    "flakyTests": [],
-    "timestamp": "2026-03-14T13:49:12.180Z"
-  },
-  {
-    "total": 18,
-    "passed": 9,
-    "failed": 9,
-    "flaky": 0,
-    "stabilityScore": "50.00%",
-    "passRate": "50.00%",
-    "flakyTests": [],
-    "timestamp": "2026-03-14T14:55:35.684Z"
-  },
-  {
-    "total": 18,
-    "passed": 9,
-    "failed": 9,
-    "flaky": 0,
-    "stabilityScore": "50.00%",
-    "passRate": "50.00%",
-    "flakyTests": [],
-    "timestamp": "2026-03-14T15:04:49.932Z"
-  },
-  {
-    "total": 18,
-    "passed": 9,
-    "failed": 9,
-    "flaky": 0,
-    "stabilityScore": "50.00%",
-    "passRate": "50.00%",
-    "flakyTests": [],
-    "timestamp": "2026-03-14T16:53:03.596Z"
-  },
-  {
-    "total": 18,
-    "passed": 9,
-    "failed": 9,
-    "flaky": 0,
-    "stabilityScore": "50.00%",
-    "passRate": "50.00%",
-    "flakyTests": [],
-    "timestamp": "2026-03-14T17:09:19.061Z"
-  },
-  {
-    "total": 18,
-    "passed": 9,
-    "failed": 9,
-    "flaky": 0,
-    "stabilityScore": "50.00%",
-    "passRate": "50.00%",
-    "flakyTests": [],
-    "timestamp": "2026-03-14T18:58:43.816Z"
-  },
-  {
     "timestamp": "2026-03-15T13:47:22.457Z",
     "total": 18,
     "passed": 9,
@@ -3459,6 +3370,141 @@
         "status": "failed",
         "start": 1774683026124,
         "stop": 1774683026143,
+        "error": "TypeError: apiRequestContext.get: Invalid URL"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-03-29T07:36:10.190Z",
+    "total": 18,
+    "passed": 9,
+    "failed": 9,
+    "flaky": 0,
+    "results": [
+      {
+        "name": "webkit:Login with valid credentials",
+        "status": "passed",
+        "start": 1774769767938,
+        "stop": 1774769769052,
+        "error": ""
+      },
+      {
+        "name": "firefox:Add product to cart",
+        "status": "passed",
+        "start": 1774769753668,
+        "stop": 1774769755500,
+        "error": ""
+      },
+      {
+        "name": "firefox:API Test",
+        "status": "failed",
+        "start": 1774769752568,
+        "stop": 1774769752589,
+        "error": "TypeError: apiRequestContext.get: Invalid URL"
+      },
+      {
+        "name": "chromium:Login with valid credentials",
+        "status": "passed",
+        "start": 1774769748284,
+        "stop": 1774769748926,
+        "error": ""
+      },
+      {
+        "name": "firefox:Login with invalid credentials",
+        "status": "passed",
+        "start": 1774769756779,
+        "stop": 1774769757524,
+        "error": ""
+      },
+      {
+        "name": "webkit:Login with invalid credentials",
+        "status": "passed",
+        "start": 1774769769063,
+        "stop": 1774769769965,
+        "error": ""
+      },
+      {
+        "name": "webkit:API Test",
+        "status": "failed",
+        "start": 1774769760134,
+        "stop": 1774769760150,
+        "error": "TypeError: apiRequestContext.get: Invalid URL"
+      },
+      {
+        "name": "webkit:API Test",
+        "status": "failed",
+        "start": 1774769759084,
+        "stop": 1774769759100,
+        "error": "TypeError: apiRequestContext.get: Invalid URL"
+      },
+      {
+        "name": "firefox:API Test",
+        "status": "failed",
+        "start": 1774769750474,
+        "stop": 1774769750489,
+        "error": "TypeError: apiRequestContext.get: Invalid URL"
+      },
+      {
+        "name": "chromium:API Test",
+        "status": "failed",
+        "start": 1774769744978,
+        "stop": 1774769744995,
+        "error": "TypeError: apiRequestContext.get: Invalid URL"
+      },
+      {
+        "name": "firefox:API Test",
+        "status": "failed",
+        "start": 1774769751526,
+        "stop": 1774769751543,
+        "error": "TypeError: apiRequestContext.get: Invalid URL"
+      },
+      {
+        "name": "firefox:Login with valid credentials",
+        "status": "passed",
+        "start": 1774769755978,
+        "stop": 1774769756768,
+        "error": ""
+      },
+      {
+        "name": "chromium:API Test",
+        "status": "failed",
+        "start": 1774769742881,
+        "stop": 1774769742898,
+        "error": "TypeError: apiRequestContext.get: Invalid URL"
+      },
+      {
+        "name": "chromium:Add product to cart",
+        "status": "passed",
+        "start": 1774769746049,
+        "stop": 1774769746829,
+        "error": ""
+      },
+      {
+        "name": "webkit:Add product to cart",
+        "status": "passed",
+        "start": 1774769762269,
+        "stop": 1774769767348,
+        "error": ""
+      },
+      {
+        "name": "webkit:API Test",
+        "status": "failed",
+        "start": 1774769761184,
+        "stop": 1774769761199,
+        "error": "TypeError: apiRequestContext.get: Invalid URL"
+      },
+      {
+        "name": "chromium:Login with invalid credentials",
+        "status": "passed",
+        "start": 1774769748938,
+        "stop": 1774769749462,
+        "error": ""
+      },
+      {
+        "name": "chromium:API Test",
+        "status": "failed",
+        "start": 1774769743932,
+        "stop": 1774769743951,
         "error": "TypeError: apiRequestContext.get: Invalid URL"
       }
     ]
