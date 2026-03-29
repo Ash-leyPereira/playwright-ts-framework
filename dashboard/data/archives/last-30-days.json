@@ -1,1 +1,91 @@
-[]
+[
+  {
+    "total": 18,
+    "passed": 9,
+    "failed": 9,
+    "flaky": 0,
+    "stabilityScore": "50.00%",
+    "flakyTests": [],
+    "timestamp": "2026-03-14T13:25:33.278Z"
+  },
+  {
+    "total": 18,
+    "passed": 9,
+    "failed": 9,
+    "flaky": 0,
+    "stabilityScore": "50.00%",
+    "passRate": "50.00%",
+    "flakyTests": [],
+    "timestamp": "2026-03-14T13:32:38.949Z"
+  },
+  {
+    "total": 18,
+    "passed": 9,
+    "failed": 9,
+    "flaky": 0,
+    "stabilityScore": "50.00%",
+    "passRate": "50.00%",
+    "flakyTests": [],
+    "timestamp": "2026-03-14T13:46:03.249Z"
+  },
+  {
+    "total": 18,
+    "passed": 9,
+    "failed": 9,
+    "flaky": 0,
+    "stabilityScore": "50.00%",
+    "passRate": "50.00%",
+    "flakyTests": [],
+    "timestamp": "2026-03-14T13:49:12.180Z"
+  },
+  {
+    "total": 18,
+    "passed": 9,
+    "failed": 9,
+    "flaky": 0,
+    "stabilityScore": "50.00%",
+    "passRate": "50.00%",
+    "flakyTests": [],
+    "timestamp": "2026-03-14T14:55:35.684Z"
+  },
+  {
+    "total": 18,
+    "passed": 9,
+    "failed": 9,
+    "flaky": 0,
+    "stabilityScore": "50.00%",
+    "passRate": "50.00%",
+    "flakyTests": [],
+    "timestamp": "2026-03-14T15:04:49.932Z"
+  },
+  {
+    "total": 18,
+    "passed": 9,
+    "failed": 9,
+    "flaky": 0,
+    "stabilityScore": "50.00%",
+    "passRate": "50.00%",
+    "flakyTests": [],
+    "timestamp": "2026-03-14T16:53:03.596Z"
+  },
+  {
+    "total": 18,
+    "passed": 9,
+    "failed": 9,
+    "flaky": 0,
+    "stabilityScore": "50.00%",
+    "passRate": "50.00%",
+    "flakyTests": [],
+    "timestamp": "2026-03-14T17:09:19.061Z"
+  },
+  {
+    "total": 18,
+    "passed": 9,
+    "failed": 9,
+    "flaky": 0,
+    "stabilityScore": "50.00%",
+    "passRate": "50.00%",
+    "flakyTests": [],
+    "timestamp": "2026-03-14T18:58:43.816Z"
+  }
+]
