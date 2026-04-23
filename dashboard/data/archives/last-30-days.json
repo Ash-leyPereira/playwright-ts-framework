@@ -1,136 +1,136 @@
 [
   {
-    "timestamp": "2026-04-08T08:01:37.872Z",
+    "timestamp": "2026-04-09T08:06:00.609Z",
     "total": 18,
     "passed": 9,
     "failed": 9,
     "flaky": 0,
     "results": [
       {
-        "name": "webkit:Login with invalid credentials",
-        "status": "passed",
-        "start": 1775635296704,
-        "stop": 1775635297647,
-        "error": ""
-      },
-      {
-        "name": "webkit:Login with valid credentials",
-        "status": "passed",
-        "start": 1775635295541,
-        "stop": 1775635296692,
-        "error": ""
-      },
-      {
         "name": "webkit:API Test",
         "status": "failed",
-        "start": 1775635288630,
-        "stop": 1775635288649,
-        "error": "TypeError: apiRequestContext.get: Invalid URL"
-      },
-      {
-        "name": "chromium:API Test",
-        "status": "failed",
-        "start": 1775635272145,
-        "stop": 1775635272160,
+        "start": 1775721949947,
+        "stop": 1775721949963,
         "error": "TypeError: apiRequestContext.get: Invalid URL"
       },
       {
         "name": "firefox:Add product to cart",
         "status": "passed",
-        "start": 1775635282122,
-        "stop": 1775635283985,
+        "start": 1775721944401,
+        "stop": 1775721946263,
         "error": ""
       },
       {
         "name": "webkit:Add product to cart",
         "status": "passed",
-        "start": 1775635290750,
-        "stop": 1775635294817,
+        "start": 1775721953166,
+        "stop": 1775721957755,
         "error": ""
       },
       {
-        "name": "firefox:API Test",
-        "status": "failed",
-        "start": 1775635278984,
-        "stop": 1775635278999,
-        "error": "TypeError: apiRequestContext.get: Invalid URL"
-      },
-      {
-        "name": "chromium:API Test",
-        "status": "failed",
-        "start": 1775635273171,
-        "stop": 1775635273186,
-        "error": "TypeError: apiRequestContext.get: Invalid URL"
-      },
-      {
-        "name": "webkit:API Test",
-        "status": "failed",
-        "start": 1775635287590,
-        "stop": 1775635287605,
-        "error": "TypeError: apiRequestContext.get: Invalid URL"
-      },
-      {
-        "name": "chromium:Add product to cart",
+        "name": "chromium:Login with valid credentials",
         "status": "passed",
-        "start": 1775635275262,
-        "stop": 1775635276013,
+        "start": 1775721938998,
+        "stop": 1775721939617,
         "error": ""
       },
       {
         "name": "firefox:Login with valid credentials",
         "status": "passed",
-        "start": 1775635284433,
-        "stop": 1775635285233,
+        "start": 1775721946690,
+        "stop": 1775721947534,
         "error": ""
       },
       {
         "name": "firefox:API Test",
         "status": "failed",
-        "start": 1775635281053,
-        "stop": 1775635281070,
+        "start": 1775721943301,
+        "stop": 1775721943316,
         "error": "TypeError: apiRequestContext.get: Invalid URL"
-      },
-      {
-        "name": "firefox:Login with invalid credentials",
-        "status": "passed",
-        "start": 1775635285246,
-        "stop": 1775635286041,
-        "error": ""
-      },
-      {
-        "name": "chromium:API Test",
-        "status": "failed",
-        "start": 1775635274200,
-        "stop": 1775635274216,
-        "error": "TypeError: apiRequestContext.get: Invalid URL"
-      },
-      {
-        "name": "chromium:Login with valid credentials",
-        "status": "passed",
-        "start": 1775635276865,
-        "stop": 1775635277461,
-        "error": ""
       },
       {
         "name": "webkit:API Test",
         "status": "failed",
-        "start": 1775635289673,
-        "stop": 1775635289694,
+        "start": 1775721951015,
+        "stop": 1775721951031,
         "error": "TypeError: apiRequestContext.get: Invalid URL"
       },
       {
         "name": "chromium:Login with invalid credentials",
         "status": "passed",
-        "start": 1775635277475,
-        "stop": 1775635277975,
+        "start": 1775721939630,
+        "stop": 1775721940123,
         "error": ""
       },
       {
         "name": "firefox:API Test",
         "status": "failed",
-        "start": 1775635280014,
-        "stop": 1775635280030,
+        "start": 1775721941163,
+        "stop": 1775721941183,
         "error": "TypeError: apiRequestContext.get: Invalid URL"
+      },
+      {
+        "name": "webkit:Login with invalid credentials",
+        "status": "passed",
+        "start": 1775721959470,
+        "stop": 1775721960378,
+        "error": ""
+      },
+      {
+        "name": "chromium:Add product to cart",
+        "status": "passed",
+        "start": 1775721937911,
+        "stop": 1775721938747,
+        "error": ""
+      },
+      {
+        "name": "chromium:API Test",
+        "status": "failed",
+        "start": 1775721935675,
+        "stop": 1775721935691,
+        "error": "TypeError: apiRequestContext.get: Invalid URL"
+      },
+      {
+        "name": "firefox:Login with invalid credentials",
+        "status": "passed",
+        "start": 1775721947547,
+        "stop": 1775721948332,
+        "error": ""
+      },
+      {
+        "name": "firefox:API Test",
+        "status": "failed",
+        "start": 1775721942247,
+        "stop": 1775721942262,
+        "error": "TypeError: apiRequestContext.get: Invalid URL"
+      },
+      {
+        "name": "chromium:API Test",
+        "status": "failed",
+        "start": 1775721934612,
+        "stop": 1775721934629,
+        "error": "TypeError: apiRequestContext.get: Invalid URL"
+      },
+      {
+        "name": "chromium:API Test",
+        "status": "failed",
+        "start": 1775721936745,
+        "stop": 1775721936761,
+        "error": "TypeError: apiRequestContext.get: Invalid URL"
+      },
+      {
+        "name": "webkit:API Test",
+        "status": "failed",
+        "start": 1775721952087,
+        "stop": 1775721952103,
+        "error": "TypeError: apiRequestContext.get: Invalid URL"
+      },
+      {
+        "name": "webkit:Login with valid credentials",
+        "status": "passed",
+        "start": 1775721958338,
+        "stop": 1775721959459,
+        "error": ""
       }
     ]
   }
